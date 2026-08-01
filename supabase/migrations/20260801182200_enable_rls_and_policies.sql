@@ -240,7 +240,15 @@ create policy "Client users can read accessible product daily metrics"
 on public.product_daily_metrics
 for select
 to authenticated
-using ((select public.can_access_project(project_id)));
+using (
+  (select public.can_access_project(project_id))
+  and exists (
+    select 1
+    from public.merchant_products mp
+    where mp.id = product_daily_metrics.merchant_product_id
+      and coalesce(mp.approval_status, 'active') not in ('draft', 'hidden')
+  )
+);
 
 create policy "Agency admins can manage product issues"
 on public.product_issues
@@ -256,6 +264,12 @@ to authenticated
 using (
   status in ('open', 'in_progress', 'resolved', 'dismissed')
   and (select public.can_access_project(project_id))
+  and exists (
+    select 1
+    from public.merchant_products mp
+    where mp.id = product_issues.merchant_product_id
+      and coalesce(mp.approval_status, 'active') not in ('draft', 'hidden')
+  )
 );
 
 create policy "Agency admins can manage reports"

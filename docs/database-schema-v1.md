@@ -158,12 +158,32 @@ Service role:
 ## Known Limitations
 
 - The migrations are not applied to a remote Supabase project yet.
-- Supabase CLI was not available in the local shell at creation time, so CLI-based migration validation could not be run.
+- Local Supabase validation requires Docker Desktop or Podman to be installed and available on `PATH`.
 - Client users cannot read `integrations`, `integration_accounts`, or `sync_runs` directly. Future client-facing refresh status should be exposed through safe derived data or server-side view models.
 - `supabase/seed.sql` includes a commented agency admin profile placeholder because `profiles.id` must reference a real local `auth.users` row.
 - No generated TypeScript database types are included yet.
 - No authentication UI or protected route logic is implemented in this phase.
 - No Windsor.ai integration or background jobs are implemented in this phase.
+
+## Local Verification
+
+The repository includes pgTAP verification scripts:
+
+```text
+supabase/tests/schema_v1.sql
+supabase/tests/seed_v1.sql
+supabase/tests/rls_v1.sql
+```
+
+Run them after starting the local stack and resetting the database:
+
+```bash
+supabase start
+supabase db reset
+supabase test db --local supabase/tests
+supabase db lint --local --schema public,auth --fail-on error
+supabase db advisors --local --type all --level info --fail-on error
+```
 
 ## Applying Migrations Later
 
