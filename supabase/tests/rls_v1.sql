@@ -1,6 +1,6 @@
 begin;
 
-select plan(11);
+select plan(12);
 
 insert into auth.users (
   id,
@@ -208,77 +208,121 @@ values (
 );
 
 set local role authenticated;
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-select set_config(
-  'request.jwt.claims',
-  '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}',
-  true
-);
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  perform set_config(
+    'request.jwt.claims',
+    '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}',
+    true
+  );
+end
+$$;
 
 select is(
-  (select count(*)::integer from public.clients),
+  (
+    select count(*)::integer
+    from public.clients
+    where id in (
+      '20000000-0000-4000-8000-000000000001',
+      '20000000-0000-4000-8000-000000000002'
+    )
+  ),
   2,
-  'agency_admin can read all clients'
-);
-
-select is(
-  (select count(*)::integer from public.projects),
-  3,
-  'agency_admin can read all projects'
+  'agency_admin can read all test clients'
 );
 
 select is(
   (
-    with inserted as (
-      insert into public.monthly_reviews (
-        project_id,
-        period_start,
-        period_end,
-        summary_draft,
-        outcome_type,
-        status
-      )
-      values (
-        '30000000-0000-4000-8000-000000000002',
-        '2026-05-01',
-        '2026-05-31',
-        'Agency draft',
-        'mixed',
-        'draft'
-      )
-      returning id
-    ),
-    updated as (
-      update public.monthly_reviews
-      set summary_draft = 'Updated agency draft'
-      where id in (select id from inserted)
-      returning id
+    select count(*)::integer
+    from public.projects
+    where id in (
+      '30000000-0000-4000-8000-000000000001',
+      '30000000-0000-4000-8000-000000000002',
+      '30000000-0000-4000-8000-000000000003'
     )
-    select count(*)::integer from updated
   ),
-  1,
+  3,
+  'agency_admin can read all test projects'
+);
+
+select lives_ok(
+  $$
+  do $do$
+  declare
+    affected_rows integer;
+  begin
+    insert into public.monthly_reviews (
+      id,
+      project_id,
+      period_start,
+      period_end,
+      summary_draft,
+      outcome_type,
+      status
+    )
+    values (
+      '40000000-0000-4000-8000-000000000003',
+      '30000000-0000-4000-8000-000000000002',
+      '2026-05-01',
+      '2026-05-31',
+      'Agency draft',
+      'mixed',
+      'draft'
+    );
+
+    update public.monthly_reviews
+    set summary_draft = 'Updated agency draft'
+    where id = '40000000-0000-4000-8000-000000000003';
+
+    get diagnostics affected_rows = row_count;
+    if affected_rows <> 1 then
+      raise exception 'Expected agency update to affect 1 row, affected %', affected_rows;
+    end if;
+  end
+  $do$;
+  $$,
   'agency_admin can insert and update agency-managed content'
 );
 
 reset role;
 set local role authenticated;
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-select set_config(
-  'request.jwt.claims',
-  '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}',
-  true
-);
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  perform set_config(
+    'request.jwt.claims',
+    '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}',
+    true
+  );
+end
+$$;
 
 select is(
-  (select count(*)::integer from public.clients),
+  (
+    select count(*)::integer
+    from public.clients
+    where id in (
+      '20000000-0000-4000-8000-000000000001',
+      '20000000-0000-4000-8000-000000000002'
+    )
+  ),
   1,
   'client_user can read their own client'
 );
 
 select is(
-  (select count(*)::integer from public.projects),
+  (
+    select count(*)::integer
+    from public.projects
+    where id in (
+      '30000000-0000-4000-8000-000000000001',
+      '30000000-0000-4000-8000-000000000002',
+      '30000000-0000-4000-8000-000000000003'
+    )
+  ),
   2,
   'client_user can read every project belonging to their client'
 );
@@ -313,17 +357,23 @@ select is(
   'client_user can read approved monthly reviews'
 );
 
-select is(
-  (
-    with attempted as (
-      update public.monthly_reviews
-      set summary_draft = 'Client edit attempt'
-      where id = '40000000-0000-4000-8000-000000000002'
-      returning id
-    )
-    select count(*)::integer from attempted
-  ),
-  0,
+select lives_ok(
+  $$
+  do $do$
+  declare
+    affected_rows integer;
+  begin
+    update public.monthly_reviews
+    set summary_draft = 'Client edit attempt'
+    where id = '40000000-0000-4000-8000-000000000002';
+
+    get diagnostics affected_rows = row_count;
+    if affected_rows <> 0 then
+      raise exception 'Expected client update to affect 0 rows, affected %', affected_rows;
+    end if;
+  end
+  $do$;
+  $$,
   'client_user cannot modify monthly reviews'
 );
 

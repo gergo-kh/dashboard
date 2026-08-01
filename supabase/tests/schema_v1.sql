@@ -84,11 +84,19 @@ select ok(
     ),
     actual as (
       select
-        c.conrelid::regclass::text as source_table,
+        source_ns.nspname || '.' || source_table.relname as source_table,
         source_attr.attname as source_column,
-        c.confrelid::regclass::text as target_table,
+        target_ns.nspname || '.' || target_table.relname as target_table,
         target_attr.attname as target_column
       from pg_constraint c
+      join pg_class source_table
+        on source_table.oid = c.conrelid
+      join pg_namespace source_ns
+        on source_ns.oid = source_table.relnamespace
+      join pg_class target_table
+        on target_table.oid = c.confrelid
+      join pg_namespace target_ns
+        on target_ns.oid = target_table.relnamespace
       join pg_attribute source_attr
         on source_attr.attrelid = c.conrelid
        and source_attr.attnum = any (c.conkey)

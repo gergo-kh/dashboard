@@ -407,7 +407,9 @@ create index integration_accounts_integration_id_idx on public.integration_accou
 create index daily_metrics_project_date_idx on public.daily_metrics (project_id, metric_date desc);
 create index daily_metrics_account_id_idx on public.daily_metrics (account_id);
 create index monthly_snapshots_project_period_idx on public.monthly_snapshots (project_id, period_start desc, period_end desc);
+create index monthly_snapshots_created_by_idx on public.monthly_snapshots (created_by);
 create index monthly_reviews_project_period_idx on public.monthly_reviews (project_id, period_start desc, period_end desc);
+create index monthly_reviews_approved_by_idx on public.monthly_reviews (approved_by);
 create index monthly_reviews_status_idx on public.monthly_reviews (status);
 create index optimization_items_project_status_idx on public.optimization_items (project_id, status);
 create index optimization_items_project_approval_idx on public.optimization_items (project_id, approval_status, is_client_visible);
@@ -419,6 +421,8 @@ create index product_daily_metrics_product_id_idx on public.product_daily_metric
 create index product_issues_project_status_idx on public.product_issues (project_id, status);
 create index product_issues_product_id_idx on public.product_issues (merchant_product_id);
 create index reports_project_period_idx on public.reports (project_id, period_start desc, period_end desc);
+create index reports_monthly_review_id_idx on public.reports (monthly_review_id);
+create index reports_monthly_snapshot_id_idx on public.reports (monthly_snapshot_id);
 create index reports_status_idx on public.reports (status);
 create index sync_runs_project_started_idx on public.sync_runs (project_id, started_at desc);
 create index sync_runs_integration_id_idx on public.sync_runs (integration_id);
