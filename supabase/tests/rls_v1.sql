@@ -19,7 +19,7 @@ values
     '10000000-0000-4000-8000-000000000001',
     'authenticated',
     'authenticated',
-    'agency-admin@example.invalid',
+    'rls-agency-admin@example.invalid',
     'test-password-placeholder',
     now(),
     '{}'::jsonb,
@@ -31,7 +31,7 @@ values
     '10000000-0000-4000-8000-000000000002',
     'authenticated',
     'authenticated',
-    'client-user@example.invalid',
+    'rls-client-user@example.invalid',
     'test-password-placeholder',
     now(),
     '{}'::jsonb,
@@ -50,7 +50,7 @@ values
   (
     '10000000-0000-4000-8000-000000000001',
     'Agency Admin',
-    'agency-admin@example.invalid',
+    'rls-agency-admin@example.invalid',
     'agency_admin',
     null,
     true
@@ -58,7 +58,7 @@ values
   (
     '10000000-0000-4000-8000-000000000002',
     'Client User',
-    'client-user@example.invalid',
+    'rls-client-user@example.invalid',
     'client_user',
     '20000000-0000-4000-8000-000000000001',
     true

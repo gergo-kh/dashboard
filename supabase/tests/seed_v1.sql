@@ -1,6 +1,6 @@
 begin;
 
-select plan(3);
+select plan(5);
 
 select ok(
   exists (
@@ -39,6 +39,33 @@ select is(
   ),
   4,
   'development seed enables all V1 modules for seeded Eroll projects'
+);
+
+select ok(
+  exists (
+    select 1
+    from auth.users u
+    join public.profiles p
+      on p.id = u.id
+    where u.email = 'agency-admin@example.invalid'
+      and p.role = 'agency_admin'
+      and p.is_active = true
+  ),
+  'development seed creates a local agency_admin auth user and profile'
+);
+
+select ok(
+  exists (
+    select 1
+    from auth.users u
+    join public.profiles p
+      on p.id = u.id
+    where u.email = 'client-user@example.invalid'
+      and p.role = 'client_user'
+      and p.client_id = '00000000-0000-4000-8000-000000000001'
+      and p.is_active = true
+  ),
+  'development seed creates a local client_user auth user and profile'
 );
 
 select * from finish();
