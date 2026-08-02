@@ -37,6 +37,10 @@ Review gate:
 - Schema and RLS review must pass before authentication work begins.
 - No client/project data table may ship without RLS.
 
+Status:
+
+- Completed and merged into `main`.
+
 ## Phase 3: Authentication
 
 Deliverables:
@@ -54,6 +58,10 @@ Review gate:
 - Client users must be restricted to their own client's projects.
 - Authorization must not rely only on frontend filtering.
 
+Status:
+
+- Completed and merged into `main`.
+
 ## Phase 4: Approved Static UI
 
 Deliverables:
@@ -70,6 +78,10 @@ Review gate:
 - UI must match the approved page structure and navigation.
 - No business integrations are required in this phase.
 
+Status:
+
+- Completed and merged into `main`.
+
 ## Phase 5: Integration Foundation
 
 Deliverables:
@@ -84,6 +96,10 @@ Review gate:
 
 - Windsor.ai credentials must remain server-side.
 - Browser code must never call Windsor.ai directly.
+
+Status:
+
+- In progress on `feature/integration-foundation`.
 
 ## Phase 6: Live Overview Metrics
 

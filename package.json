@@ -7,6 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "integration:sync:local": "vitest run tests/integration-sync-local.test.ts",
+    "integration:sync:db:local": "vitest run tests/integration-sync-db-local.test.ts",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -19,6 +21,7 @@
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "recharts": "^3.10.1",
+    "server-only": "0.0.1",
     "zod": "4.4.3"
   },
   "devDependencies": {

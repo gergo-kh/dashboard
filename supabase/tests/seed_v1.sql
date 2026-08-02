@@ -1,6 +1,6 @@
 begin;
 
-select plan(5);
+select plan(7);
 
 select ok(
   exists (
@@ -66,6 +66,34 @@ select ok(
       and p.is_active = true
   ),
   'development seed creates a local client_user auth user and profile'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.integrations
+    where project_id = '00000000-0000-4000-8000-000000000011'
+      and provider = any (array['google_ads', 'meta_ads', 'ga4', 'tiktok_ads', 'merchant_center'])
+  ),
+  5,
+  'development seed creates local-only Eroll HU integration mappings'
+);
+
+select ok(
+  not exists (
+    select 1
+    from public.integration_accounts
+    where metadata ?| array[
+      'api_key',
+      'token',
+      'access_token',
+      'refresh_token',
+      'secret',
+      'password',
+      'authorization'
+    ]
+  ),
+  'development seed integration account metadata contains no credential-like keys'
 );
 
 select * from finish();

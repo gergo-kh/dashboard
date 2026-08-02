@@ -277,3 +277,107 @@ set
   merchant_enabled = excluded.merchant_enabled,
   optimizations_enabled = excluded.optimizations_enabled,
   reports_enabled = excluded.reports_enabled;
+
+insert into public.integrations (
+  id,
+  project_id,
+  provider,
+  status
+)
+values
+  (
+    '00000000-0000-4000-8000-000000000301',
+    '00000000-0000-4000-8000-000000000011',
+    'google_ads',
+    'connected'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000302',
+    '00000000-0000-4000-8000-000000000011',
+    'meta_ads',
+    'connected'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000303',
+    '00000000-0000-4000-8000-000000000011',
+    'ga4',
+    'connected'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000304',
+    '00000000-0000-4000-8000-000000000011',
+    'tiktok_ads',
+    'planned'
+  ),
+  (
+    '00000000-0000-4000-8000-000000000305',
+    '00000000-0000-4000-8000-000000000011',
+    'merchant_center',
+    'planned'
+  )
+on conflict (project_id, provider) do update
+set
+  status = excluded.status,
+  last_error = null;
+
+insert into public.integration_accounts (
+  id,
+  integration_id,
+  external_account_id,
+  external_account_name,
+  account_type,
+  metadata,
+  is_active
+)
+values
+  (
+    '00000000-0000-4000-8000-000000000401',
+    '00000000-0000-4000-8000-000000000301',
+    'local-google-ads-eroll-hu',
+    'Local Google Ads Eroll HU',
+    'google_ads',
+    '{"environment":"local_test_data","note":"fake account mapping only"}'::jsonb,
+    true
+  ),
+  (
+    '00000000-0000-4000-8000-000000000402',
+    '00000000-0000-4000-8000-000000000302',
+    'local-meta-ads-eroll-hu',
+    'Local Meta Ads Eroll HU',
+    'meta_ads',
+    '{"environment":"local_test_data","note":"fake account mapping only"}'::jsonb,
+    true
+  ),
+  (
+    '00000000-0000-4000-8000-000000000403',
+    '00000000-0000-4000-8000-000000000303',
+    'local-ga4-eroll-hu',
+    'Local GA4 Eroll HU',
+    'ga4',
+    '{"environment":"local_test_data","note":"fake account mapping only"}'::jsonb,
+    true
+  ),
+  (
+    '00000000-0000-4000-8000-000000000404',
+    '00000000-0000-4000-8000-000000000304',
+    'local-tiktok-ads-eroll-hu',
+    'Local TikTok Ads Eroll HU',
+    'tiktok_ads',
+    '{"environment":"local_test_data","note":"fake account mapping only"}'::jsonb,
+    false
+  ),
+  (
+    '00000000-0000-4000-8000-000000000405',
+    '00000000-0000-4000-8000-000000000305',
+    'local-merchant-center-eroll-hu',
+    'Local Merchant Center Eroll HU',
+    'merchant_center',
+    '{"environment":"local_test_data","note":"metadata only; product ingestion is out of scope"}'::jsonb,
+    false
+  )
+on conflict (integration_id, external_account_id) do update
+set
+  external_account_name = excluded.external_account_name,
+  account_type = excluded.account_type,
+  metadata = excluded.metadata,
+  is_active = excluded.is_active;
