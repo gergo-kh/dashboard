@@ -6,6 +6,8 @@ import {
   type AccessibleProject,
   type UserProfile
 } from "@/lib/auth/session";
+import { getPublicEnv } from "@/lib/env";
+import { sanitizeInternalRedirectPath } from "@/lib/routing/redirects";
 import { getAuthRouteDecision } from "@/lib/supabase/middleware";
 import { buildPasswordResetRedirectUrl } from "@/app/(auth)/reset-password/actions";
 
@@ -59,7 +61,7 @@ const projects = [
 describe("auth route decisions", () => {
   it("redirects unauthenticated portal requests to login", () => {
     expect(
-      getAuthRouteDecision({ pathname: "/", isAuthenticated: false })
+      getAuthRouteDecision({ pathname: "/", returnTo: "/", isAuthenticated: false })
     ).toEqual({ type: "redirect", destination: "/login" });
   });
 
@@ -67,6 +69,36 @@ describe("auth route decisions", () => {
     expect(
       getAuthRouteDecision({ pathname: "/login", isAuthenticated: true })
     ).toEqual({ type: "redirect", destination: "/" });
+  });
+
+  it("preserves safe internal return paths for unauthenticated users", () => {
+    expect(
+      getAuthRouteDecision({
+        pathname: "/reports",
+        returnTo: "/reports?month=2026-07",
+        isAuthenticated: false
+      })
+    ).toEqual({
+      type: "redirect",
+      destination: "/login?next=%2Freports%3Fmonth%3D2026-07"
+    });
+  });
+});
+
+describe("internal redirect sanitization", () => {
+  it.each([
+    ["/", "/"],
+    ["/reports", "/reports"],
+    ["/reports?month=2026-07", "/reports?month=2026-07"],
+    ["//evil.example", "/"],
+    ["https://evil.example", "/"],
+    ["/\\evil.example", "/"],
+    ["", "/"],
+    ["%", "/"],
+    ["/%2Fevil.example", "/"],
+    ["/%5Cevil.example", "/"]
+  ])("sanitizes %s to %s", (input, expected) => {
+    expect(sanitizeInternalRedirectPath(input)).toBe(expected);
   });
 });
 
@@ -128,5 +160,40 @@ describe("session actions", () => {
     expect(buildPasswordResetRedirectUrl("http://127.0.0.1:3000")).toBe(
       "http://127.0.0.1:3000/auth/callback?next=%2Fupdate-password"
     );
+  });
+
+  it("requires a trusted application URL in public env", () => {
+    function restoreEnv(key: string, value: string | undefined) {
+      if (value === undefined) {
+        delete process.env[key];
+        return;
+      }
+
+      process.env[key] = value;
+    }
+
+    const previous = {
+      appUrl: process.env.NEXT_PUBLIC_APP_URL,
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    };
+
+    try {
+      process.env.NEXT_PUBLIC_APP_URL = "https://app.example.invalid";
+      process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.example.invalid";
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_test";
+      delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      expect(getPublicEnv()).toMatchObject({
+        NEXT_PUBLIC_APP_URL: "https://app.example.invalid",
+        supabaseKey: "sb_publishable_test"
+      });
+    } finally {
+      restoreEnv("NEXT_PUBLIC_APP_URL", previous.appUrl);
+      restoreEnv("NEXT_PUBLIC_SUPABASE_URL", previous.supabaseUrl);
+      restoreEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", previous.publishableKey);
+      restoreEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", previous.anonKey);
+    }
   });
 });

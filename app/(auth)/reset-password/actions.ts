@@ -1,9 +1,9 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getPublicEnv } from "@/lib/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export function buildPasswordResetRedirectUrl(origin: string) {
-  const redirectUrl = new URL("/auth/callback", origin);
+export function buildPasswordResetRedirectUrl(appUrl = getPublicEnv().NEXT_PUBLIC_APP_URL) {
+  const redirectUrl = new URL("/auth/callback", appUrl);
   redirectUrl.searchParams.set("next", "/update-password");
   return redirectUrl.toString();
 }
@@ -17,11 +17,9 @@ export async function requestPasswordResetAction(formData: FormData) {
     redirect("/reset-password?error=missing");
   }
 
-  const headerStore = await headers();
-  const origin = headerStore.get("origin") ?? "http://127.0.0.1:3000";
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: buildPasswordResetRedirectUrl(origin)
+    redirectTo: buildPasswordResetRedirectUrl()
   });
 
   if (error) {

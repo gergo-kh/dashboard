@@ -9,13 +9,14 @@ This document describes the Phase 3 Supabase authentication foundation for the K
 - Unauthenticated portal requests are redirected to `/login`.
 - Authenticated users are redirected away from `/login` to `/`.
 - Logout clears the Supabase session and redirects to `/login?signedOut=1`.
+- `next` redirect values are sanitized to internal application paths only.
 
 ## Cookie And Session Model
 
 - Browser and server clients use `@supabase/ssr`.
 - Session state is stored in Supabase auth cookies.
-- `middleware.ts` refreshes server-side auth state for application routes.
-- Server code validates the authenticated user with Supabase Auth before loading profile data.
+- `middleware.ts` refreshes server-side auth state for application routes and validates identity with `getClaims()`.
+- Server code validates the authenticated user with `getUser()` before loading profile data.
 - Service-role keys are not required and must not be exposed to browser code.
 
 ## Protected Route Behavior
@@ -45,11 +46,14 @@ The helper handles expired sessions, missing profile rows, inactive profiles, an
 Required runtime variables:
 
 ```text
+NEXT_PUBLIC_APP_URL=
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` is intentionally not required for browser authentication.
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` is still supported as a transition fallback for existing local or hosted projects, but new environments should use `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. `SUPABASE_SERVICE_ROLE_KEY` is intentionally not required for browser authentication.
+
+`NEXT_PUBLIC_APP_URL` is the trusted base URL for password reset callbacks. The application does not build password reset links from the request `Origin` header.
 
 ## Local Test Accounts
 
@@ -67,7 +71,7 @@ These are development-only credentials using non-routable example email addresse
 1. The user requests a reset link at `/reset-password`.
 2. The response is generic and does not reveal whether an email exists.
 3. Local Supabase captures reset emails in Mailpit.
-4. The reset link returns through `/auth/callback?next=/update-password`.
+4. The reset link returns through `{NEXT_PUBLIC_APP_URL}/auth/callback?next=/update-password`.
 5. The callback exchanges the recovery code for a cookie session.
 6. `/update-password` lets the user set a new password.
 7. After a successful update, the user is signed out and redirected to `/login?updated=1`.
@@ -77,6 +81,8 @@ These are development-only credentials using non-routable example email addresse
 - Authorization is enforced server-side and by PostgreSQL RLS.
 - Frontend checks are only UI behavior, not authorization boundaries.
 - No service-role key is used in browser authentication.
+- Redirect destinations are restricted to internal paths and reject protocol-relative, absolute URL, backslash, and malformed encoded inputs.
+- Password reset callbacks use `NEXT_PUBLIC_APP_URL` as the trusted base URL.
 - No Windsor.ai integration is included in this phase.
 - No hosted Supabase migrations are applied in this phase.
 - Environment validation is centralized in `lib/env.ts`.

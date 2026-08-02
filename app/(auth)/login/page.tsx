@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { signInWithPasswordAction } from "@/app/(auth)/login/actions";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { sanitizeInternalRedirectPath } from "@/lib/routing/redirects";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type LoginPageProps = Readonly<{
@@ -41,7 +42,7 @@ function getLoginMessage(params: Record<string, string | string[] | undefined>) 
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const next = getFirstParam(params, "next") ?? "/";
+  const next = sanitizeInternalRedirectPath(getFirstParam(params, "next"));
   const supabase = await createServerSupabaseClient();
   const {
     data: { user }

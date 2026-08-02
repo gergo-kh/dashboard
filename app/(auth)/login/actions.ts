@@ -1,12 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { sanitizeInternalRedirectPath } from "@/lib/routing/redirects";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function signInWithPasswordAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/");
+  const next = sanitizeInternalRedirectPath(String(formData.get("next") ?? "/"));
 
   if (!email || !password) {
     redirect(`/login?error=missing&next=${encodeURIComponent(next)}`);
@@ -22,5 +23,5 @@ export async function signInWithPasswordAction(formData: FormData) {
     redirect(`/login?error=invalid&next=${encodeURIComponent(next)}`);
   }
 
-  redirect(next.startsWith("/") ? next : "/");
+  redirect(next);
 }

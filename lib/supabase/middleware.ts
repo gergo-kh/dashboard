@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getPublicEnv } from "@/lib/env";
+import { sanitizeInternalRedirectPath } from "@/lib/routing/redirects";
 import type { Database } from "@/types/database";
 
 const publicRoutes = new Set([
@@ -12,6 +13,7 @@ const publicRoutes = new Set([
 
 export type AuthRouteDecisionInput = {
   pathname: string;
+  returnTo?: string;
   isAuthenticated: boolean;
 };
 
@@ -21,6 +23,7 @@ export type AuthRouteDecision =
 
 export function getAuthRouteDecision({
   pathname,
+  returnTo,
   isAuthenticated
 }: AuthRouteDecisionInput): AuthRouteDecision {
   if (isAuthenticated && pathname === "/login") {
@@ -28,7 +31,8 @@ export function getAuthRouteDecision({
   }
 
   if (!isAuthenticated && !publicRoutes.has(pathname)) {
-    const next = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;
+    const safeReturnTo = sanitizeInternalRedirectPath(returnTo ?? pathname);
+    const next = safeReturnTo === "/" ? "" : `?next=${encodeURIComponent(safeReturnTo)}`;
     return { type: "redirect", destination: `/login${next}` };
   }
 
@@ -37,7 +41,8 @@ export function getAuthRouteDecision({
 
 function buildRedirectUrl(request: NextRequest, destination: string) {
   const redirectUrl = request.nextUrl.clone();
-  const [pathname, search] = destination.split("?");
+  const safeDestination = sanitizeInternalRedirectPath(destination);
+  const [pathname, search] = safeDestination.split("?");
   redirectUrl.pathname = pathname;
   redirectUrl.search = search ? `?${search}` : "";
   return redirectUrl;
@@ -51,7 +56,7 @@ export async function updateSession(request: NextRequest) {
 
   const supabase = createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    env.supabaseKey,
     {
       cookies: {
         getAll() {
@@ -74,13 +79,12 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
 
   const decision = getAuthRouteDecision({
     pathname: request.nextUrl.pathname,
-    isAuthenticated: Boolean(user)
+    returnTo: `${request.nextUrl.pathname}${request.nextUrl.search}`,
+    isAuthenticated: Boolean(claimsData?.claims)
   });
 
   if (decision.type === "redirect") {
