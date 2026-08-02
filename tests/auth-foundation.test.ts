@@ -23,6 +23,7 @@ const agencyProfile = {
   id: "user-1",
   full_name: "Agency Admin",
   email: "agency-admin@example.invalid",
+  avatar_url: null,
   role: "agency_admin",
   client_id: null,
   is_active: true,

@@ -16,7 +16,12 @@ This document describes the Phase 2 Supabase schema and Row Level Security found
    - Revokes table access from `anon`.
    - Enables RLS on all V1 data tables.
    - Creates agency-admin and client-user policies.
-4. `supabase/seed.sql`
+4. `20260802063523_add_daily_metrics_currency_code.sql`
+   - Adds `daily_metrics.currency_code`.
+   - Adds an ISO currency check constraint.
+   - Adds one integration uniqueness constraint for project/provider upserts.
+   - Adds a currency/date index for daily metric queries.
+5. `supabase/seed.sql`
    - Development-only seed data.
    - Not a production migration.
    - Must not be run against production.
@@ -31,7 +36,7 @@ This document describes the Phase 2 Supabase schema and Row Level Security found
 | `project_modules` | Project-level visibility flags for V1 modules. |
 | `integrations` | Project integration status per provider; does not store credentials. |
 | `integration_accounts` | External account mappings under an integration; stores metadata only, not secrets. |
-| `daily_metrics` | Normalized daily project/channel metrics. |
+| `daily_metrics` | Normalized daily project/channel metrics, including an explicit ISO currency code. |
 | `monthly_snapshots` | Versioned monthly reporting snapshots. |
 | `monthly_reviews` | Draft and approved monthly written summaries, outcomes, corrective actions, and next-month plans. |
 | `optimization_items` | Agency work items: planned, current, completed, or cancelled. |
@@ -164,6 +169,7 @@ Service role:
 - No generated TypeScript database types are included yet.
 - No authentication UI or protected route logic is implemented in this phase.
 - No Windsor.ai integration or background jobs are implemented in this phase.
+- Phase 5 adds only the integration foundation; the real Windsor.ai production contract still needs confirmation before live calls.
 
 ## Local Verification
 
