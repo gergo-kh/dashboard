@@ -117,7 +117,7 @@ export type Database = {
           slug: string;
           country_code: string | null;
           market_label: string | null;
-          currency_code: string;
+          currency_code: string | null;
           timezone: string;
           roas_target: DecimalString | null;
           report_day: number | null;
@@ -133,7 +133,7 @@ export type Database = {
           slug: string;
           country_code?: string | null;
           market_label?: string | null;
-          currency_code?: string;
+          currency_code?: string | null;
           timezone?: string;
           roas_target?: DecimalString | null;
           report_day?: number | null;
@@ -148,7 +148,7 @@ export type Database = {
           slug?: string;
           country_code?: string | null;
           market_label?: string | null;
-          currency_code?: string;
+          currency_code?: string | null;
           timezone?: string;
           roas_target?: DecimalString | null;
           report_day?: number | null;

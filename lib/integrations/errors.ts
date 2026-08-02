@@ -1,6 +1,4 @@
-import { assertServerOnlyModule } from "@/lib/server-only";
-
-assertServerOnlyModule("Integration errors");
+import "server-only";
 
 export type IntegrationErrorCode =
   | "configuration_error"

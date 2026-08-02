@@ -1,4 +1,4 @@
-import { assertServerOnlyModule } from "@/lib/server-only";
+import "server-only";
 import type {
   IntegrationAccountRow,
   IntegrationMetadata,
@@ -10,8 +10,6 @@ import type {
 } from "@/lib/integrations/repository";
 import { assertSafeMetadata, type IntegrationProvider } from "@/lib/integrations/metadata";
 import type { NormalizedDailyMetric } from "@/lib/integrations/windsor/normalize";
-
-assertServerOnlyModule("In-memory integration repository");
 
 type StoredDailyMetric = NormalizedDailyMetric;
 

@@ -12,7 +12,7 @@ export type WindsorRawDailyMetric = Readonly<{
   date: string;
   provider: IntegrationProvider;
   externalAccountId: string;
-  currency: string;
+  currency?: string;
   spend?: string;
   revenue?: string;
   purchases?: string;

@@ -39,7 +39,7 @@ lib/integrations/sync/
   types.ts       Sync input and result contracts.
 ```
 
-All external-service code is server-only. Browser components must not import `lib/env/server.ts` or `lib/integrations/**`.
+All external-service code is server-only. Browser components must not import `lib/env/server.ts` or `lib/integrations/**`. Runtime checks are not the primary boundary: server-only modules use the Next.js `import "server-only";` guard so accidental imports from Client Components fail at build time.
 
 ## Server-Only Secret Boundary
 
@@ -138,6 +138,8 @@ Money and numeric metric values are handled as non-negative decimal strings befo
 
 GA4 ecommerce revenue is stored in `revenue` for `ga4` rows. Advertising platform conversion value is stored in `platform_conversion_value` for ad-platform rows. The ingestion layer does not calculate blended ROAS, blended CPA, or merge GA4 revenue with platform-reported revenue.
 
+`currency_code` is nullable in the database for legacy rows. Phase 5 ingestion must set a validated ISO currency code explicitly for every new normalized row. There is no default HUF or inferred currency. Rows with `currency_code is null` mean unknown/unbackfilled currency, not HUF.
+
 ## Migration
 
 Phase 5 adds one backwards-compatible migration:
@@ -149,8 +151,9 @@ Phase 5 adds one backwards-compatible migration:
 It adds:
 
 - `daily_metrics.currency_code`,
-- an ISO currency check constraint,
+- an ISO currency check constraint that allows legacy null values,
 - a project/provider uniqueness constraint for `integrations`,
+- a full account-scoped unique index for `daily_metrics(project_id, provider, account_id, metric_date)` so repository upserts match a real PostgreSQL conflict target,
 - a currency/date index for metric queries.
 
 No new tables are created.
@@ -173,7 +176,7 @@ The sync service flow:
 12. mark the `sync_run` successful with fetched and persisted counts,
 13. on failure, mark the `sync_run` failed with sanitized error code and message.
 
-Batch behavior is deterministic all-or-nothing before persistence: all account responses are fetched and normalized before the repository writes metric rows. If persistence itself fails, the sync is marked failed and stores only sanitized error information.
+Batch behavior is deterministic all-or-nothing before metric writes: all account responses are fetched and normalized before the repository writes metric rows. The current Phase 5 implementation does not wrap metric upsert, integration status update, and final `sync_run` update in one database transaction. If an unexpected persistence failure happens after some database writes, the persisted state may be partially updated; retries remain idempotent because daily metrics use stable conflict keys and sync failures store sanitized error categories.
 
 ## Idempotency Strategy
 
@@ -237,13 +240,21 @@ pnpm integration:sync:local
 
 The harness uses the fake Windsor client and in-memory repository by default. It runs the same date range twice and confirms the second run does not create duplicate daily metric rows. It also records a sanitized failure case. It does not call real Windsor.ai.
 
+Run the local PostgreSQL-backed fake sync harness:
+
+```bash
+pnpm integration:sync:db:local
+```
+
+This harness uses the fake Windsor client, the real Supabase repository implementation, and the local Supabase PostgreSQL database. It refuses non-local Supabase URLs, signs in with the development-only local agency admin account, cleans only deterministic Eroll HU test rows for the fixed date range, runs the sync twice, checks no duplicate logical daily metric rows exist, verifies persisted successful `sync_runs`, records a deterministic failed sync, and checks the failed row contains only sanitized error information.
+
 ## Known Limitations
 
 - The real Windsor.ai production request/response contract is not confirmed yet.
 - No real Windsor.ai call is enabled in Phase 5.
 - No hosted Supabase migration has been applied.
 - No scheduled sync, cron, queue, or worker exists yet.
-- The local sync command uses an in-memory harness rather than writing to the local Supabase database.
+- The in-memory local harness and PostgreSQL-backed local harness are both test/development tools, not production jobs.
 - Merchant Center product ingestion starts later and is not included here.
 
 ## Handoff To Phase 6

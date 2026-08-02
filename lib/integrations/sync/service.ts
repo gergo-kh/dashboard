@@ -1,4 +1,4 @@
-import { assertServerOnlyModule } from "@/lib/server-only";
+import "server-only";
 import { IntegrationError, toIntegrationError } from "@/lib/integrations/errors";
 import type { IntegrationRepository } from "@/lib/integrations/repository";
 import { normalizeDailyMetric } from "@/lib/integrations/windsor/normalize";
@@ -8,8 +8,6 @@ import type {
   DailyMetricsSyncResult,
   DailyMetricsSyncSuccess
 } from "@/lib/integrations/sync/types";
-
-assertServerOnlyModule("Daily metrics sync service");
 
 export type DailyMetricsSyncServiceConfig = Readonly<{
   repository: IntegrationRepository;

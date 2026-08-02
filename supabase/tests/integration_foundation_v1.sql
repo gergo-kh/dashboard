@@ -1,6 +1,6 @@
 begin;
 
-select plan(10);
+select plan(15);
 
 select ok(
   exists (
@@ -9,9 +9,10 @@ select ok(
     where table_schema = 'public'
       and table_name = 'daily_metrics'
       and column_name = 'currency_code'
-      and is_nullable = 'NO'
+      and is_nullable = 'YES'
+      and column_default is null
   ),
-  'daily_metrics stores an explicit currency code'
+  'daily_metrics currency_code is nullable with no silent default'
 );
 
 select ok(
@@ -32,6 +33,17 @@ select ok(
       and indexname = 'daily_metrics_project_provider_account_date_uidx'
   ),
   'daily_metrics has an account-level idempotency index'
+);
+
+select ok(
+  exists (
+    select 1
+    from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'daily_metrics'
+      and indexname = 'daily_metrics_project_provider_date_no_account_uidx'
+  ),
+  'daily_metrics keeps a null-account idempotency index'
 );
 
 select is(
@@ -250,6 +262,39 @@ values (
   '{"date_from":"2026-07-01","date_to":"2026-07-01"}'::jsonb
 );
 
+insert into public.daily_metrics (
+  id,
+  project_id,
+  metric_date,
+  provider,
+  account_id,
+  spend,
+  revenue,
+  purchases,
+  metadata
+)
+values (
+  '63000000-0000-4000-8000-000000000001',
+  '31000000-0000-4000-8000-000000000001',
+  '2026-07-03',
+  'manual',
+  null,
+  0,
+  0,
+  0,
+  '{"source":"legacy_null_currency_test"}'::jsonb
+);
+
+select ok(
+  exists (
+    select 1
+    from public.daily_metrics
+    where id = '63000000-0000-4000-8000-000000000001'
+      and currency_code is null
+  ),
+  'legacy rows can keep null currency distinct from HUF'
+);
+
 set local role authenticated;
 do $$
 begin
@@ -309,6 +354,7 @@ select is(
     select count(*)::integer
     from public.daily_metrics
     where project_id = '31000000-0000-4000-8000-000000000001'
+      and provider = 'google_ads'
   ),
   1,
   'client_user can read daily metrics for their own project'
@@ -323,6 +369,106 @@ select is(
   0,
   'client_user cannot read daily metrics for another client project'
 );
+
+reset role;
+set local role authenticated;
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', '11000000-0000-4000-8000-000000000001', true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  perform set_config(
+    'request.jwt.claims',
+    '{"sub":"11000000-0000-4000-8000-000000000001","role":"authenticated"}',
+    true
+  );
+end
+$$;
+
+select lives_ok(
+  $$
+  insert into public.daily_metrics (
+    project_id,
+    metric_date,
+    provider,
+    account_id,
+    currency_code,
+    spend,
+    revenue,
+    purchases
+  )
+  values (
+    '31000000-0000-4000-8000-000000000001',
+    '2026-07-01',
+    'google_ads',
+    '62000000-0000-4000-8000-000000000001',
+    'HUF',
+    9999,
+    0,
+    9
+  )
+  on conflict (project_id, provider, account_id, metric_date)
+  do update
+  set
+    spend = excluded.spend,
+    purchases = excluded.purchases
+  $$,
+  'account-scoped daily_metrics upsert uses the real database conflict target'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.daily_metrics
+    where project_id = '31000000-0000-4000-8000-000000000001'
+      and provider = 'google_ads'
+      and account_id = '62000000-0000-4000-8000-000000000001'
+      and metric_date = '2026-07-01'
+  ),
+  1,
+  'account-scoped daily_metrics upsert does not create duplicate logical rows'
+);
+
+select throws_ok(
+  $$
+  insert into public.daily_metrics (
+    project_id,
+    metric_date,
+    provider,
+    account_id,
+    currency_code,
+    spend,
+    revenue,
+    purchases
+  )
+  values (
+    '31000000-0000-4000-8000-000000000001',
+    '2026-07-03',
+    'manual',
+    null,
+    null,
+    0,
+    0,
+    0
+  )
+  $$,
+  '23505',
+  null,
+  'null-account daily_metrics rows are protected by the partial unique index'
+);
+
+reset role;
+set local role authenticated;
+do $$
+begin
+  perform set_config('request.jwt.claim.sub', '11000000-0000-4000-8000-000000000002', true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  perform set_config(
+    'request.jwt.claims',
+    '{"sub":"11000000-0000-4000-8000-000000000002","role":"authenticated"}',
+    true
+  );
+end
+$$;
 
 select throws_ok(
   $$

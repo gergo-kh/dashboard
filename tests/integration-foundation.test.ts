@@ -68,6 +68,22 @@ describe("server-only boundary", () => {
       expect(readFileSync(filePath, "utf8")).not.toMatch(/lib\/integrations|lib\/env\/server/);
     });
   });
+
+  it("uses Next.js server-only guards on integration boundary modules", () => {
+    const serverOnlyFiles = [
+      "lib/env/server.ts",
+      "lib/integrations/repository.ts",
+      "lib/integrations/windsor/client.ts",
+      "lib/integrations/sync/service.ts",
+      "lib/integrations/testing/local-supabase-harness.ts"
+    ];
+
+    serverOnlyFiles.forEach((filePath) => {
+      expect(readFileSync(filePath, "utf8").startsWith('import "server-only";')).toBe(
+        true
+      );
+    });
+  });
 });
 
 describe("safe metadata and errors", () => {
@@ -283,6 +299,21 @@ describe("metric normalization", () => {
           date: "2026-07-01",
           provider: "google_ads",
           externalAccountId: "local-google-ads-eroll-hu",
+          spend: "1"
+        }
+      })
+    ).toThrow(IntegrationError);
+
+    expect(() =>
+      normalizeDailyMetric({
+        projectId: "project-1",
+        integrationAccountId: "account-1",
+        expectedProvider: "google_ads",
+        ingestedAt: "2026-08-02T00:00:00Z",
+        row: {
+          date: "2026-07-01",
+          provider: "google_ads",
+          externalAccountId: "local-google-ads-eroll-hu",
           currency: "HUF1",
           spend: "1"
         }
@@ -324,6 +355,13 @@ describe("metric normalization", () => {
     expect(ga4.platformConversionValue).toBeNull();
     expect(googleAds.revenue).toBe("0");
     expect(googleAds.platformConversionValue).toBe("300000");
+  });
+
+  it("documents nullable legacy currency in database types", () => {
+    const databaseTypes = readFileSync("types/database.ts", "utf8");
+
+    expect(databaseTypes).toContain("currency_code: string | null;");
+    expect(databaseTypes).toContain("currency_code?: string | null;");
   });
 });
 

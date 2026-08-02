@@ -1,4 +1,4 @@
-import { assertServerOnlyModule } from "@/lib/server-only";
+import "server-only";
 import { IntegrationError } from "@/lib/integrations/errors";
 import { windsorDailyMetricsResponseSchema } from "@/lib/integrations/windsor/schemas";
 import type {
@@ -6,8 +6,6 @@ import type {
   WindsorDailyMetricsRequest,
   WindsorFetch
 } from "@/lib/integrations/windsor/types";
-
-assertServerOnlyModule("Windsor client");
 
 export type WindsorClientConfig = Readonly<{
   apiKey: string;

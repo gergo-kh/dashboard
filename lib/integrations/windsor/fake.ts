@@ -1,4 +1,4 @@
-import { assertServerOnlyModule } from "@/lib/server-only";
+import "server-only";
 import { IntegrationError } from "@/lib/integrations/errors";
 import type {
   WindsorClient,
@@ -6,8 +6,6 @@ import type {
   WindsorDailyMetricsResponse,
   WindsorRawDailyMetric
 } from "@/lib/integrations/windsor/types";
-
-assertServerOnlyModule("Fake Windsor client");
 
 export type FakeWindsorMode =
   | "success"

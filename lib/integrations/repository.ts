@@ -1,4 +1,4 @@
-import { assertServerOnlyModule } from "@/lib/server-only";
+import "server-only";
 import { IntegrationError } from "@/lib/integrations/errors";
 import {
   assertSafeMetadata,
@@ -7,8 +7,6 @@ import {
 import type { NormalizedDailyMetric } from "@/lib/integrations/windsor/normalize";
 import type { Database, Json } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
-
-assertServerOnlyModule("Integration repository");
 
 export type IntegrationRow = Database["public"]["Tables"]["integrations"]["Row"];
 export type IntegrationAccountRow =

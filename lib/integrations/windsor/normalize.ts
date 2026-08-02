@@ -1,3 +1,4 @@
+import "server-only";
 import { z } from "zod";
 import type { OverviewMetricProvider } from "@/lib/integrations/metadata";
 import { IntegrationError } from "@/lib/integrations/errors";
@@ -78,7 +79,7 @@ function parseIsoDate(value: string): string {
   return parsed.data;
 }
 
-function parseCurrency(value: string): string {
+function parseCurrency(value: string | undefined): string {
   const parsed = currencyCodeSchema.safeParse(value);
 
   if (!parsed.success) {

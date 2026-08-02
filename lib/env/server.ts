@@ -1,7 +1,5 @@
+import "server-only";
 import { z } from "zod";
-import { assertServerOnlyModule } from "@/lib/server-only";
-
-assertServerOnlyModule("Server environment");
 
 const serverIntegrationEnvSchema = z
   .object({
