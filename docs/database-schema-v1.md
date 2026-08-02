@@ -113,7 +113,7 @@ The model uses three reusable helper functions:
   - Returns true for agency admins or client users whose `client_id` owns the project.
   - Used for project-scoped reads.
 
-The helper functions are `SECURITY DEFINER` because they must read `profiles` and `projects` without recursive RLS policy calls. Each function sets `search_path = public, pg_temp`, has public execution revoked, and is granted only to `authenticated` and `service_role`.
+The helper functions are `SECURITY DEFINER` because they must read `profiles` and `projects` without recursive RLS policy calls. Each function sets `search_path = public, pg_temp`, has public and anonymous execution explicitly revoked, and is granted only to `authenticated` and `service_role`.
 
 ## Access Examples
 
