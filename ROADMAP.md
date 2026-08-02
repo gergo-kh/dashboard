@@ -99,7 +99,7 @@ Review gate:
 
 Status:
 
-- In progress on `feature/integration-foundation`.
+- Completed and merged into `main` via Phase 5 PR #4.
 
 ## Phase 6: Live Overview Metrics
 
