@@ -2,6 +2,7 @@
 
 import { CheckCircle2, ExternalLink, ListChecks, Target, X } from "lucide-react";
 import { useId, useState } from "react";
+import { useDialogBehavior } from "@/components/ui/use-dialog-behavior";
 import type {
   ClientActionItem,
   CompletedOptimizationItem,
@@ -48,6 +49,10 @@ export function WorkInProgressCard({ items }: WorkInProgressCardProps) {
 export function CompletedWorkCard({ items }: CompletedWorkCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
+  const { closeDialog, dialogRef, triggerRef } = useDialogBehavior({
+    isOpen,
+    onClose: () => setIsOpen(false)
+  });
   const visibleItems = items.slice(0, 6);
   const hiddenCount = 12;
 
@@ -62,7 +67,12 @@ export function CompletedWorkCard({ items }: CompletedWorkCardProps) {
           </li>
         ))}
       </ul>
-      <button className="kh-text-action" onClick={() => setIsOpen(true)} type="button">
+      <button
+        className="kh-text-action"
+        onClick={() => setIsOpen(true)}
+        ref={triggerRef}
+        type="button"
+      >
         <ListChecks aria-hidden="true" size={17} />+ {hiddenCount} további optimalizálás megtekintése
       </button>
 
@@ -72,6 +82,7 @@ export function CompletedWorkCard({ items }: CompletedWorkCardProps) {
             aria-labelledby={titleId}
             aria-modal="true"
             className="kh-side-sheet"
+            ref={dialogRef}
             role="dialog"
           >
             <div className="kh-sheet-header">
@@ -79,7 +90,7 @@ export function CompletedWorkCard({ items }: CompletedWorkCardProps) {
               <button
                 aria-label="Optimalizálások ablak bezárása"
                 className="kh-icon-button"
-                onClick={() => setIsOpen(false)}
+                onClick={closeDialog}
                 type="button"
               >
                 <X aria-hidden="true" size={20} />
@@ -136,6 +147,9 @@ export function ClientActionsCard({ items }: ClientActionsCardProps) {
       <span className="kh-sr-only" id="merchant-disabled-help">
         Merchant Center mélylink a későbbi integrációs fázisban lesz elérhető.
       </span>
+      <p className="kh-disabled-note">
+        A Merchant Center megnyitása a későbbi integrációs fázisban lesz aktív.
+      </p>
     </article>
   );
 }

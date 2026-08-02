@@ -49,7 +49,7 @@ export default async function PortalHomePage() {
       <KpiGrid kpis={overview.kpis} />
       <MetricExplanationSheet explanation={overview.metricExplanation} />
 
-      <div className="kh-overview-grid kh-overview-grid-balanced">
+      <div className="kh-overview-grid kh-overview-grid-balanced kh-chart-channel-grid">
         <PerformanceChart chart={overview.performanceChart} />
         <ChannelSummary summary={overview.channelSummary} />
       </div>

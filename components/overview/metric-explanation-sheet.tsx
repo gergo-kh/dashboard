@@ -2,6 +2,7 @@
 
 import { Calculator, X } from "lucide-react";
 import { useId, useState } from "react";
+import { useDialogBehavior } from "@/components/ui/use-dialog-behavior";
 import type { MetricExplanation } from "@/types/overview";
 
 type MetricExplanationSheetProps = Readonly<{
@@ -11,10 +12,19 @@ type MetricExplanationSheetProps = Readonly<{
 export function MetricExplanationSheet({ explanation }: MetricExplanationSheetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const titleId = useId();
+  const { closeDialog, dialogRef, triggerRef } = useDialogBehavior({
+    isOpen,
+    onClose: () => setIsOpen(false)
+  });
 
   return (
     <>
-      <button className="kh-text-action" onClick={() => setIsOpen(true)} type="button">
+      <button
+        className="kh-text-action"
+        onClick={() => setIsOpen(true)}
+        ref={triggerRef}
+        type="button"
+      >
         <Calculator aria-hidden="true" size={17} />
         Hogyan számoljuk ezeket a mutatókat?
       </button>
@@ -25,6 +35,7 @@ export function MetricExplanationSheet({ explanation }: MetricExplanationSheetPr
             aria-labelledby={titleId}
             aria-modal="true"
             className="kh-side-sheet"
+            ref={dialogRef}
             role="dialog"
           >
             <div className="kh-sheet-header">
@@ -32,7 +43,7 @@ export function MetricExplanationSheet({ explanation }: MetricExplanationSheetPr
               <button
                 aria-label="Mutató magyarázat bezárása"
                 className="kh-icon-button"
-                onClick={() => setIsOpen(false)}
+                onClick={closeDialog}
                 type="button"
               >
                 <X aria-hidden="true" size={20} />

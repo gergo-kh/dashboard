@@ -103,12 +103,15 @@ export function PortalMobileNav({ shell }: PortalMobileNavProps) {
                     aria-current={item.isActive ? "page" : undefined}
                     aria-disabled={item.isDisabled ? "true" : undefined}
                     className={item.isActive ? "is-active" : ""}
+                    disabled={item.isDisabled}
                     key={item.label}
                     title={item.isDisabled ? `${item.label} oldal hamarosan elérhető` : item.label}
                     type="button"
                   >
                     <Icon aria-hidden="true" size={18} />
                     {item.label}
+                    {item.isDisabled ? " " : null}
+                    {item.isDisabled ? <span>Hamarosan</span> : null}
                   </button>
                 );
               })}

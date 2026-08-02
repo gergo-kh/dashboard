@@ -48,6 +48,7 @@ export function ReportsCard({ reports }: ReportsCardProps) {
         <span className="kh-sr-only" id="pdf-disabled-help">
           PDF generálás ebben a fázisban még nincs.
         </span>
+        <p className="kh-disabled-note">PDF generálás ebben a fázisban még nincs.</p>
       </div>
 
       <ul className="kh-report-history" aria-label="Korábbi riportok">

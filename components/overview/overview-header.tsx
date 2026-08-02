@@ -20,31 +20,49 @@ export function OverviewHeader({ header }: OverviewHeaderProps) {
       <div className="kh-header-controls" aria-label="Áttekintés vezérlők">
         <label className="kh-control-field">
           Projekt
-          <select aria-label="Projekt kiválasztása" defaultValue={header.selectedProjectName}>
+          <select
+            aria-describedby="project-selector-help"
+            aria-label="Projekt kiválasztása"
+            defaultValue={header.selectedProjectName}
+            disabled
+          >
             {header.projectSelector.map((project) => (
               <option disabled={!project.isAccessible} key={project.id} value={project.name}>
                 {project.name}
               </option>
             ))}
           </select>
+          <span className="kh-control-help" id="project-selector-help">
+            A projektváltás a következő fázisban lesz aktív.
+          </span>
         </label>
 
         <label className="kh-control-field">
           Időszak
-          <select aria-label="Időszak kiválasztása" defaultValue={selectedDateRange?.value}>
+          <select
+            aria-describedby="date-range-help"
+            aria-label="Időszak kiválasztása"
+            defaultValue={selectedDateRange?.value}
+            disabled
+          >
             {header.dateRanges.map((range) => (
               <option key={range.value} value={range.value}>
                 {range.label}
               </option>
             ))}
           </select>
+          <span className="kh-control-help" id="date-range-help">
+            A statikus előnézet a jóváhagyott júliusi időszakot mutatja.
+          </span>
         </label>
 
         <label className="kh-control-field">
           Összehasonlítás
           <select
+            aria-describedby="comparison-help"
             aria-label="Összehasonlítás kiválasztása"
             defaultValue={selectedComparison?.value}
+            disabled
           >
             {header.comparisons.map((comparison) => (
               <option key={comparison.value} value={comparison.value}>
@@ -52,6 +70,9 @@ export function OverviewHeader({ header }: OverviewHeaderProps) {
               </option>
             ))}
           </select>
+          <span className="kh-control-help" id="comparison-help">
+            Az összehasonlítási váltás live adatokkal kapcsolódik be.
+          </span>
         </label>
       </div>
 
@@ -77,7 +98,7 @@ export function OverviewHeader({ header }: OverviewHeaderProps) {
           type="button"
         >
           <Bot aria-hidden="true" size={17} />
-          Kérdezd az AI-t
+          Kérdezd az AI-t{" "}
           <span>Hamarosan</span>
         </button>
         <span className="kh-sr-only" id="ai-disabled-help">
@@ -97,6 +118,9 @@ export function OverviewHeader({ header }: OverviewHeaderProps) {
         <span className="kh-sr-only" id="download-disabled-help">
           A PDF riport letöltése a riport generálási fázisban készül el.
         </span>
+        <p className="kh-disabled-note">
+          Az AI kérdezés és a PDF letöltés a későbbi fázisban lesz elérhető.
+        </p>
       </div>
     </header>
   );

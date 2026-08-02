@@ -4,6 +4,8 @@ export function validateOverviewViewModel(viewModel: OverviewViewModel) {
   return (
     viewModel.kpis.length === 6 &&
     viewModel.header.projectSelector.every((project) => project.name.length > 0) &&
+    viewModel.performanceChart.intervals.length === 3 &&
+    viewModel.performanceChart.intervals.every((interval) => interval.series.length > 0) &&
     viewModel.attentionProducts.length <= 10 &&
     monthlyOutcomeHasSafeNegativeItems(viewModel.monthlyOutcome)
   );

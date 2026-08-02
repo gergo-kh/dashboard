@@ -26,6 +26,7 @@ export function PortalSidebar({ shell }: PortalSidebarProps) {
                 <button
                   aria-disabled="true"
                   className="kh-sidebar-nav-item"
+                  disabled
                   key={item.label}
                   title={`${item.label} oldal hamarosan elérhető`}
                   type="button"
@@ -90,15 +91,28 @@ export function ReportMiniCard({ shell }: PortalSidebarProps) {
       <h2 id="sidebar-report-title">{shell.currentReport.monthLabel}</h2>
       <p>{shell.currentReport.statusLabel}</p>
       <div className="kh-sidebar-report-actions" aria-label="Riport műveletek">
-        <button title="Statikus előnézet, Phase 4-ben még nincs megnyitás" type="button">
+        <button
+          aria-describedby="sidebar-report-disabled-help"
+          disabled
+          title="Statikus előnézet, Phase 4-ben még nincs megnyitás"
+          type="button"
+        >
           <Eye aria-hidden="true" size={15} />
           Megtekintés
         </button>
-        <button disabled title="PDF letöltés a későbbi riport fázisban készül el" type="button">
+        <button
+          aria-describedby="sidebar-report-disabled-help"
+          disabled
+          title="PDF letöltés a későbbi riport fázisban készül el"
+          type="button"
+        >
           <Download aria-hidden="true" size={15} />
           Letöltés
         </button>
       </div>
+      <small className="kh-sidebar-report-help" id="sidebar-report-disabled-help">
+        A riport megnyitása és letöltése későbbi fázisban készül el.
+      </small>
     </section>
   );
 }

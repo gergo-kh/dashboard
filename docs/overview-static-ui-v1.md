@@ -55,7 +55,7 @@ Static data is created in `lib/overview/static-data.ts` and includes:
 - monthly summary
 - positive, mixed, and weak monthly outcome examples
 - exactly six KPI cards
-- Recharts series
+- manually authored daily, weekly, and monthly Recharts series
 - channel summary
 - current work
 - completed optimizations
@@ -72,10 +72,14 @@ The view model is deterministic and manually authored. No random mock-data gener
 
 Static controls look production-ready but remain non-destructive:
 
+- project, date range, and comparison selectors are disabled with visible Hungarian explanations
 - `Kérdezd az AI-t` is disabled and marked as coming soon.
 - `Riport letöltése` is disabled.
 - Merchant Center deep-link action is disabled.
 - PDF download is disabled.
+- sidebar report preview/download actions are disabled with a visible explanation.
+
+The chart interval control is the one functional local interaction in this phase. It switches between manually authored daily, weekly, and monthly datasets and updates `aria-pressed` state without loading live data.
 
 Missing data states are explicit and never rendered as real zero values.
 
@@ -88,6 +92,8 @@ Key tokens:
 - primary navy: `--kh-navy`
 - secondary navy: `--kh-navy-soft`
 - accent orange: `--kh-orange`
+- chart revenue, spend, ROAS, grid, and axis tokens: `--kh-chart-*`
+- online status tokens: `--kh-status-online` and `--kh-status-online-text`
 - workspace background: `--background`
 - cards: `--kh-card`
 - borders, muted text, success, warning, danger, focus, and shadows
@@ -124,9 +130,9 @@ The helper `getNavigationModeForWidth()` documents the sidebar/drawer breakpoint
 - The page uses semantic `header`, `nav`, `section`, `article`, table roles, and headings.
 - Mobile drawer has `role="dialog"`, `aria-modal`, Escape close, and Tab trapping.
 - Active navigation uses `aria-current="page"`.
-- Disabled controls include titles and screen-reader descriptions explaining why they are unavailable.
+- Disabled controls include visible Hungarian explanations, with `aria-describedby` where useful.
 - KPI tooltips are keyboard accessible through focusable info buttons.
-- Charts include a screen-reader text summary.
+- Charts include an accessible textual summary and expose the current interval through `aria-pressed`.
 - Color is paired with icons, labels, or text badges rather than used alone.
 - Visible focus styles are centralized in `app/globals.css`.
 
@@ -142,7 +148,7 @@ The performance chart supports explicit `normal`, `loading`, `empty`, and `error
 
 ## Tests
 
-`tests/overview-static-ui.test.tsx` covers:
+`tests/overview-static-ui.test.ts` covers:
 
 - overview view-model validation
 - exactly six KPI cards
@@ -157,13 +163,23 @@ The performance chart supports explicit `normal`, `loading`, `empty`, and `error
 - disabled AI/report controls
 - accessibility labels for important actions
 
+`tests/overview-components.test.tsx` covers:
+
+- chart interval switching and `aria-pressed` updates
+- chart design token configuration
+- disabled selector and action explanations
+- disabled sidebar report actions
+- mobile drawer open/close behavior
+- dialog open/close labels and focus return
+- Escape close behavior for the completed-work sheet
+
 ## Known Limitations
 
 - No live advertising data is loaded.
 - No Windsor.ai integration is present.
 - No real PDF generation is present.
 - Non-overview module pages remain out of scope.
-- Chart controls are static in this phase.
+- Project/date/comparison selector changes are intentionally disabled until live data exists.
 - Full browser E2E coverage is not included yet.
 
 ## Remaining Work

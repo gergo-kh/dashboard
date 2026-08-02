@@ -11,6 +11,7 @@
   --kh-muted: #667085;
   --kh-muted-soft: #f1f4f8;
   --kh-card: #ffffff;
+  --kh-white: #ffffff;
   --kh-success: #16794c;
   --kh-success-bg: #eaf7ef;
   --kh-danger: #b42318;
@@ -18,6 +19,16 @@
   --kh-warning: #b65a00;
   --kh-warning-bg: #fff5e6;
   --kh-focus: #2563eb;
+  --kh-chart-revenue: var(--kh-orange);
+  --kh-chart-spend: var(--kh-navy-soft);
+  --kh-chart-roas: var(--kh-success);
+  --kh-chart-grid: var(--kh-border);
+  --kh-chart-axis: var(--kh-muted);
+  --kh-status-online: #21c66f;
+  --kh-status-online-text: #76e4aa;
+  --kh-status-online-glow: rgb(33 198 111 / 70%);
+  --kh-skeleton-start: #e8edf4;
+  --kh-skeleton-middle: var(--background);
   --kh-shadow: 0 18px 50px rgb(11 31 58 / 8%);
   --kh-shadow-soft: 0 8px 28px rgb(11 31 58 / 6%);
 }
@@ -265,6 +276,10 @@ textarea {
   opacity: 0.62;
 }
 
+.kh-sidebar-nav-item:disabled {
+  cursor: not-allowed;
+}
+
 .kh-nav-soon {
   margin-left: auto;
   border: 1px solid rgb(255 255 255 / 16%);
@@ -310,15 +325,15 @@ textarea {
 }
 
 .kh-manager-status svg {
-  color: #21c66f;
-  filter: drop-shadow(0 0 8px rgb(33 198 111 / 70%));
+  color: var(--kh-status-online);
+  filter: drop-shadow(0 0 8px var(--kh-status-online-glow));
   margin-top: 3px;
 }
 
 .kh-manager-status span {
   display: inline-block;
   margin-top: 2px;
-  color: #76e4aa;
+  color: var(--kh-status-online-text);
   font-size: 12px;
   font-weight: 800;
 }
@@ -329,7 +344,7 @@ textarea {
 
 .kh-sidebar-report p {
   margin: 6px 0 12px;
-  color: #76e4aa;
+  color: var(--kh-status-online-text);
   font-size: 13px;
   font-weight: 800;
 }
@@ -358,6 +373,14 @@ textarea {
 .kh-sidebar-report-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.54;
+}
+
+.kh-sidebar-report-help {
+  display: block;
+  margin-top: 8px;
+  color: rgb(255 255 255 / 68%);
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .kh-sidebar-logout {
@@ -450,6 +473,26 @@ textarea {
   padding: 0 12px;
 }
 
+.kh-control-field select:disabled {
+  background: var(--kh-muted-soft);
+  color: var(--kh-muted);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.kh-control-help,
+.kh-disabled-note {
+  margin: 0;
+  color: var(--kh-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.kh-disabled-note {
+  flex-basis: 100%;
+}
+
 .kh-management-strip {
   display: flex;
   flex-wrap: wrap;
@@ -526,6 +569,10 @@ textarea {
 
 .kh-overview-grid-balanced {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.kh-chart-channel-grid {
+  grid-template-columns: minmax(0, 0.95fr) minmax(520px, 1.05fr);
 }
 
 .kh-card {
@@ -800,10 +847,26 @@ textarea {
   color: white;
 }
 
+.kh-chart-summary {
+  max-width: 760px;
+  margin: 12px 0 0;
+  color: var(--kh-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .kh-chart-frame {
   width: 100%;
+  height: 340px;
   min-width: 0;
   margin-top: 10px;
+  overflow: hidden;
+}
+
+.kh-chart-canvas {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
 }
 
 .kh-channel-table,
@@ -913,6 +976,11 @@ textarea {
 .kh-compact-list strong,
 .kh-client-action-list strong {
   color: var(--kh-navy);
+}
+
+.kh-compact-list strong {
+  display: block;
+  line-height: 1.35;
 }
 
 .kh-action-list p,
@@ -1033,7 +1101,12 @@ textarea {
   width: min(100%, 460px);
   height: 14px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #e8edf4, #f7f9fc, #e8edf4);
+  background: linear-gradient(
+    90deg,
+    var(--kh-skeleton-start),
+    var(--kh-skeleton-middle),
+    var(--kh-skeleton-start)
+  );
 }
 
 .kh-skeleton-title {
@@ -1143,10 +1216,20 @@ textarea {
   box-shadow: inset 4px 0 0 var(--kh-orange);
 }
 
-.kh-mobile-nav-list button[aria-disabled="true"] {
+.kh-mobile-nav-list button:disabled {
   color: var(--kh-muted);
   cursor: not-allowed;
   opacity: 0.68;
+}
+
+.kh-mobile-nav-list button span {
+  margin-left: auto;
+  border: 1px solid var(--kh-border);
+  border-radius: 999px;
+  color: var(--kh-muted);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 7px;
 }
 
 .kh-mobile-drawer .kh-sidebar-logout {
@@ -1174,6 +1257,12 @@ textarea {
 .kh-drawer-context strong {
   color: var(--kh-navy);
   margin-bottom: 8px;
+}
+
+@media (max-width: 1500px) {
+  .kh-chart-channel-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1280px) {
@@ -1227,6 +1316,10 @@ textarea {
 
   .kh-drawer-overlay {
     display: block;
+  }
+
+  .kh-chart-channel-grid {
+    grid-template-columns: 1fr;
   }
 
   .kh-portal-content {

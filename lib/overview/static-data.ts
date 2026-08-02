@@ -218,6 +218,51 @@ const performanceChart: PerformanceChartViewModel = {
     { label: "júl. 25.", revenue: 4210000, spend: 795000, roas: 5.3 },
     { label: "júl. 28.", revenue: 4700000, spend: 850000, roas: 5.53 },
     { label: "júl. 31.", revenue: 4980000, spend: 875000, roas: 5.69 }
+  ],
+  intervals: [
+    {
+      value: "daily",
+      label: "Napi",
+      summary:
+        "Napi nézet: a bevétel a hónap második felében gyorsult, a ROAS stabilan a cél felett maradt.",
+      series: [
+        { label: "júl. 1.", revenue: 2400000, spend: 620000, roas: 3.87 },
+        { label: "júl. 4.", revenue: 3100000, spend: 680000, roas: 4.56 },
+        { label: "júl. 7.", revenue: 2850000, spend: 640000, roas: 4.45 },
+        { label: "júl. 10.", revenue: 3600000, spend: 710000, roas: 5.07 },
+        { label: "júl. 13.", revenue: 3320000, spend: 735000, roas: 4.52 },
+        { label: "júl. 16.", revenue: 4050000, spend: 780000, roas: 5.19 },
+        { label: "júl. 19.", revenue: 3880000, spend: 760000, roas: 5.11 },
+        { label: "júl. 22.", revenue: 4380000, spend: 810000, roas: 5.41 },
+        { label: "júl. 25.", revenue: 4210000, spend: 795000, roas: 5.3 },
+        { label: "júl. 28.", revenue: 4700000, spend: 850000, roas: 5.53 },
+        { label: "júl. 31.", revenue: 4980000, spend: 875000, roas: 5.69 }
+      ]
+    },
+    {
+      value: "weekly",
+      label: "Heti",
+      summary:
+        "Heti nézet: július utolsó két hete hozta a legerősebb bevételt és a legjobb ROAS-t.",
+      series: [
+        { label: "27. hét", revenue: 8450000, spend: 1940000, roas: 4.36 },
+        { label: "28. hét", revenue: 10880000, spend: 2175000, roas: 5.0 },
+        { label: "29. hét", revenue: 12060000, spend: 2315000, roas: 5.21 },
+        { label: "30. hét", revenue: 13290000, spend: 2455000, roas: 5.41 },
+        { label: "31. hét", revenue: 14610000, spend: 2550000, roas: 5.73 }
+      ]
+    },
+    {
+      value: "monthly",
+      label: "Havi",
+      summary:
+        "Havi nézet: májustól júliusig a bevétel és a blended ROAS is fokozatosan emelkedett.",
+      series: [
+        { label: "május", revenue: 74600000, spend: 18100000, roas: 4.12 },
+        { label: "június", revenue: 80600000, spend: 17950000, roas: 4.49 },
+        { label: "július", revenue: 92400000, spend: 19800000, roas: 4.67 }
+      ]
+    }
   ]
 };
 

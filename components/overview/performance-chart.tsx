@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Area,
   AreaChart,
@@ -12,6 +13,7 @@ import {
   YAxis
 } from "recharts";
 import { EmptyState, ErrorState, SectionSkeleton } from "@/components/ui/state";
+import { chartColorTokens } from "@/lib/overview/design-tokens";
 import { formatCompactForint, formatForint, formatRoas } from "@/lib/overview/format";
 import type { PerformanceChartViewModel } from "@/types/overview";
 
@@ -20,6 +22,13 @@ type PerformanceChartProps = Readonly<{
 }>;
 
 export function PerformanceChart({ chart }: PerformanceChartProps) {
+  const [selectedGranularity, setSelectedGranularity] = useState(chart.granularity);
+  const selectedInterval =
+    chart.intervals.find((interval) => interval.value === selectedGranularity) ??
+    chart.intervals[0];
+  const visibleSeries = selectedInterval?.series ?? chart.series;
+  const visibleSummary = selectedInterval?.summary ?? chart.summary;
+
   if (chart.state === "loading") {
     return (
       <section className="kh-card kh-chart-card" aria-labelledby="performance-chart-title">
@@ -54,72 +63,86 @@ export function PerformanceChart({ chart }: PerformanceChartProps) {
     <section className="kh-card kh-chart-card" aria-labelledby="performance-chart-title">
       <ChartHeading chart={chart} />
       <div className="kh-chart-controls" aria-label="Diagram bontása">
-        <button aria-pressed="true" type="button">
-          Napi
-        </button>
-        <button type="button">Heti</button>
-        <button type="button">Havi</button>
+        {chart.intervals.map((interval) => (
+          <button
+            aria-pressed={interval.value === selectedGranularity}
+            key={interval.value}
+            onClick={() => setSelectedGranularity(interval.value)}
+            type="button"
+          >
+            {interval.label}
+          </button>
+        ))}
       </div>
-      <p className="kh-sr-only">{chart.summary}</p>
-      <div className="kh-chart-frame">
-        <ResponsiveContainer height={320} width="100%">
-          <AreaChart data={chart.series} margin={{ top: 12, right: 8, bottom: 0, left: 0 }}>
-            <CartesianGrid stroke="#E6EAF0" strokeDasharray="4 4" vertical={false} />
-            <XAxis dataKey="label" tick={{ fill: "#667085", fontSize: 12 }} tickLine={false} />
-            <YAxis
-              tick={{ fill: "#667085", fontSize: 12 }}
-              tickFormatter={(value) => formatCompactForint(Number(value))}
-              tickLine={false}
-              yAxisId="money"
-            />
-            <YAxis
-              orientation="right"
-              tick={{ fill: "#667085", fontSize: 12 }}
-              tickFormatter={(value) => formatRoas(Number(value))}
-              tickLine={false}
-              yAxisId="roas"
-            />
-            <Tooltip
-              formatter={(value, name) => {
-                if (name === "ROAS") {
-                  return [formatRoas(Number(value)), "ROAS"];
-                }
+      <p className="kh-chart-summary">{visibleSummary}</p>
+      <div aria-label={visibleSummary} className="kh-chart-frame" role="img">
+        <div className="kh-chart-canvas">
+          <ResponsiveContainer height="100%" width="100%">
+            <AreaChart data={visibleSeries} margin={{ top: 12, right: 8, bottom: 0, left: 0 }}>
+              <CartesianGrid stroke={chartColorTokens.grid} strokeDasharray="4 4" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: chartColorTokens.axis, fontSize: 12 }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: chartColorTokens.axis, fontSize: 12 }}
+                tickFormatter={(value) => formatCompactForint(Number(value))}
+                tickLine={false}
+                yAxisId="money"
+              />
+              <YAxis
+                orientation="right"
+                tick={{ fill: chartColorTokens.axis, fontSize: 12 }}
+                tickFormatter={(value) => formatRoas(Number(value))}
+                tickLine={false}
+                yAxisId="roas"
+              />
+              <Tooltip
+                formatter={(value, name) => {
+                  if (name === "ROAS") {
+                    return [formatRoas(Number(value)), "ROAS"];
+                  }
 
-                return [formatForint(Number(value)), String(name)];
-              }}
-              labelFormatter={(label) => `${label}`}
-            />
-            <Legend verticalAlign="top" wrapperStyle={{ paddingBottom: 16 }} />
-            <Area
-              dataKey="revenue"
-              fill="#F36A21"
-              fillOpacity={0.1}
-              name="Bevétel"
-              stroke="#F36A21"
-              strokeWidth={2}
-              type="monotone"
-              yAxisId="money"
-            />
-            <Line
-              dataKey="spend"
-              dot={false}
-              name="Költés"
-              stroke="#24344D"
-              strokeWidth={2}
-              type="monotone"
-              yAxisId="money"
-            />
-            <Line
-              dataKey="roas"
-              dot={false}
-              name="ROAS"
-              stroke="#16794C"
-              strokeWidth={2}
-              type="monotone"
-              yAxisId="roas"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+                  return [formatForint(Number(value)), String(name)];
+                }}
+                labelFormatter={(label) => `${label}`}
+              />
+              <Legend verticalAlign="top" wrapperStyle={{ paddingBottom: 16 }} />
+              <Area
+                dataKey="revenue"
+                fill={chartColorTokens.revenue}
+                fillOpacity={0.1}
+                isAnimationActive={false}
+                name="Bevétel"
+                stroke={chartColorTokens.revenue}
+                strokeWidth={2}
+                type="monotone"
+                yAxisId="money"
+              />
+              <Line
+                dataKey="spend"
+                dot={false}
+                isAnimationActive={false}
+                name="Költés"
+                stroke={chartColorTokens.spend}
+                strokeWidth={2}
+                type="monotone"
+                yAxisId="money"
+              />
+              <Line
+                dataKey="roas"
+                dot={false}
+                isAnimationActive={false}
+                name="ROAS"
+                stroke={chartColorTokens.roas}
+                strokeWidth={2}
+                type="monotone"
+                yAxisId="roas"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </section>
   );

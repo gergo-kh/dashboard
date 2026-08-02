@@ -96,11 +96,19 @@ export type ChartSeriesPoint = {
   roas: number;
 };
 
+export type ChartIntervalOption = {
+  value: ChartGranularity;
+  label: string;
+  summary: string;
+  series: ChartSeriesPoint[];
+};
+
 export type PerformanceChartViewModel = {
   title: string;
   state: ChartDisplayState;
   granularity: ChartGranularity;
   series: ChartSeriesPoint[];
+  intervals: ChartIntervalOption[];
   summary: string;
   emptyMessage: string;
   errorMessage: string;
