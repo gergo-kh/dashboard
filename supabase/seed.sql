@@ -2,34 +2,133 @@
 -- Do not run this against production.
 -- No real passwords, API keys, tokens, or personal email addresses are included.
 
--- Agency admin placeholder:
--- 1. Create a local Supabase Auth user through Supabase Studio/Auth first.
--- 2. Replace the placeholder UUID below with that auth user id.
--- 3. Uncomment the insert when a matching auth.users row exists.
---
--- insert into public.profiles (
---   id,
---   full_name,
---   email,
---   role,
---   client_id,
---   is_active
--- )
--- values (
---   '00000000-0000-4000-8000-000000000100',
---   'Agency Admin Placeholder',
---   'agency.admin@example.invalid',
---   'agency_admin',
---   null,
---   true
--- )
--- on conflict (id) do update
--- set
---   full_name = excluded.full_name,
---   email = excluded.email,
---   role = excluded.role,
---   client_id = excluded.client_id,
---   is_active = excluded.is_active;
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
+  email_change_token_current,
+  email_change_confirm_status,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  is_sso_user,
+  is_anonymous,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-4000-8000-000000000101',
+    'authenticated',
+    'authenticated',
+    'agency-admin@example.invalid',
+    extensions.crypt('LocalAgencyPass123!', extensions.gen_salt('bf', 10)),
+    now(),
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    0,
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"email":"agency-admin@example.invalid","email_verified":true,"phone_verified":false,"sub":"00000000-0000-4000-8000-000000000101"}'::jsonb,
+    false,
+    false,
+    now(),
+    now()
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-4000-8000-000000000102',
+    'authenticated',
+    'authenticated',
+    'client-user@example.invalid',
+    extensions.crypt('LocalClientPass123!', extensions.gen_salt('bf', 10)),
+    now(),
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    0,
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"email":"client-user@example.invalid","email_verified":true,"phone_verified":false,"sub":"00000000-0000-4000-8000-000000000102"}'::jsonb,
+    false,
+    false,
+    now(),
+    now()
+  )
+on conflict (id) do update
+set
+  instance_id = excluded.instance_id,
+  email = excluded.email,
+  encrypted_password = excluded.encrypted_password,
+  email_confirmed_at = excluded.email_confirmed_at,
+  confirmation_token = excluded.confirmation_token,
+  recovery_token = excluded.recovery_token,
+  email_change_token_new = excluded.email_change_token_new,
+  email_change = excluded.email_change,
+  phone_change = excluded.phone_change,
+  phone_change_token = excluded.phone_change_token,
+  reauthentication_token = excluded.reauthentication_token,
+  email_change_token_current = excluded.email_change_token_current,
+  email_change_confirm_status = excluded.email_change_confirm_status,
+  raw_app_meta_data = excluded.raw_app_meta_data,
+  raw_user_meta_data = excluded.raw_user_meta_data,
+  updated_at = excluded.updated_at;
+
+insert into auth.identities (
+  id,
+  provider_id,
+  user_id,
+  identity_data,
+  provider,
+  last_sign_in_at,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-4000-8000-000000000201',
+    '00000000-0000-4000-8000-000000000101',
+    '00000000-0000-4000-8000-000000000101',
+    '{"sub":"00000000-0000-4000-8000-000000000101","email":"agency-admin@example.invalid","email_verified":false,"phone_verified":false}'::jsonb,
+    'email',
+    now(),
+    now(),
+    now()
+  ),
+  (
+    '00000000-0000-4000-8000-000000000202',
+    '00000000-0000-4000-8000-000000000102',
+    '00000000-0000-4000-8000-000000000102',
+    '{"sub":"00000000-0000-4000-8000-000000000102","email":"client-user@example.invalid","email_verified":false,"phone_verified":false}'::jsonb,
+    'email',
+    now(),
+    now(),
+    now()
+  )
+on conflict (provider_id, provider) do update
+set
+  identity_data = excluded.identity_data,
+  updated_at = excluded.updated_at;
 
 insert into public.clients (
   id,
@@ -47,6 +146,39 @@ on conflict (slug) do update
 set
   name = excluded.name,
   status = excluded.status;
+
+insert into public.profiles (
+  id,
+  full_name,
+  email,
+  role,
+  client_id,
+  is_active
+)
+values
+  (
+    '00000000-0000-4000-8000-000000000101',
+    'Agency Admin Local',
+    'agency-admin@example.invalid',
+    'agency_admin',
+    null,
+    true
+  ),
+  (
+    '00000000-0000-4000-8000-000000000102',
+    'Client User Local',
+    'client-user@example.invalid',
+    'client_user',
+    '00000000-0000-4000-8000-000000000001',
+    true
+  )
+on conflict (id) do update
+set
+  full_name = excluded.full_name,
+  email = excluded.email,
+  role = excluded.role,
+  client_id = excluded.client_id,
+  is_active = excluded.is_active;
 
 insert into public.projects (
   id,
