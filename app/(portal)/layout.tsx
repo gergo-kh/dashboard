@@ -1,6 +1,7 @@
-import { signOutAction } from "@/app/(portal)/actions";
+import { PortalMobileNav } from "@/components/portal/portal-mobile-nav";
+import { PortalSidebar } from "@/components/portal/portal-sidebar";
 import { requireCurrentUser } from "@/lib/auth/session";
-import Link from "next/link";
+import { createPortalShellViewModel } from "@/lib/overview/static-data";
 
 type PortalLayoutProps = Readonly<{
   children: React.ReactNode;
@@ -8,46 +9,19 @@ type PortalLayoutProps = Readonly<{
 
 export default async function PortalLayout({ children }: PortalLayoutProps) {
   const currentUser = await requireCurrentUser();
-  const roleLabel =
-    currentUser.profile.role === "agency_admin" ? "Ügynökségi admin" : "Ügyfél";
-  const projectLabel =
-    currentUser.projects.length === 1
-      ? "1 elérhető projekt"
-      : `${currentUser.projects.length} elérhető projekt`;
+  const shell = createPortalShellViewModel({
+    profileName: currentUser.profile.full_name,
+    role: currentUser.profile.role,
+    projects: currentUser.projects
+  });
 
   return (
     <main className="kh-portal-shell">
-      <aside className="kh-sidebar" aria-label="Fő navigáció">
-        <div>
-          <div className="kh-sidebar-brand">KonverzióHuszár</div>
-          <nav className="kh-sidebar-nav">
-            <Link aria-current="page" href="/">
-              Marketing áttekintés
-            </Link>
-            <span>Teljesítmény</span>
-            <span>Merchant Center</span>
-            <span>Optimalizálások</span>
-            <span>Riportok</span>
-            <span>Beállítások</span>
-          </nav>
-        </div>
-        <div className="kh-sidebar-footer">
-          <div>
-            <p>{currentUser.profile.full_name}</p>
-            <span>{roleLabel}</span>
-          </div>
-          <div>
-            <p>{projectLabel}</p>
-            <span>Aktív hozzáférés</span>
-          </div>
-          <form action={signOutAction}>
-            <button className="kh-sidebar-logout" type="submit">
-              Kijelentkezés
-            </button>
-          </form>
-        </div>
-      </aside>
-      <section className="kh-portal-content">{children}</section>
+      <PortalSidebar shell={shell} />
+      <PortalMobileNav shell={shell} />
+      <section className="kh-portal-content" aria-label="Portál tartalom">
+        {children}
+      </section>
     </main>
   );
 }
