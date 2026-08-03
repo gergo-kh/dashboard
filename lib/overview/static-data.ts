@@ -40,34 +40,56 @@ function getProjectMarketLabel(projectName: string) {
   return "HU";
 }
 
-function getSelectedProject(projects: AccessibleProject[]) {
+function getProjectMarketLabelFromProject(project: AccessibleProject) {
   return (
-    projects.find((project) => project.slug === "demo-hu") ??
-    projects[0] ?? {
+    project.market_label ??
+    project.country_code ??
+    getProjectMarketLabel(project.name)
+  );
+}
+
+function getSelectedProject(context: Pick<OverviewDataContext, "projects" | "selectedProject">) {
+  return (
+    context.selectedProject ??
+    context.projects[0] ?? {
       id: fallbackProjectId,
       name: "Demó HU",
       slug: "demo-hu",
       status: "active",
+      country_code: "HU",
+      market_label: "HU",
+      currency_code: "HUF",
+      roas_target: "4.2",
+      report_day: 5,
+      assigned_manager_profile_id: null,
       client_id: "demo-static",
       client: {
         id: "demo-static",
         name: "Demó ügyfél",
         slug: "demo-client"
-      }
+      },
+      assignedManager: null
     }
   );
 }
 
-export function createProjectSelectorItems(projects: AccessibleProject[]) {
-  const selectedProject = getSelectedProject(projects);
-  const sourceProjects = projects.length > 0 ? projects : [selectedProject];
+function formatProjectRoasTarget(roasTarget: string | null) {
+  return roasTarget?.replace(".", ",") ?? "4,2";
+}
+
+export function createProjectSelectorItems(
+  projects: AccessibleProject[],
+  selectedProject?: AccessibleProject | null
+) {
+  const selected = getSelectedProject({ projects, selectedProject: selectedProject ?? null });
+  const sourceProjects = projects.length > 0 ? projects : [selected];
 
   return sourceProjects.map((project) => ({
     id: project.id,
-    name: `${project.name} (${getProjectMarketLabel(project.name)})`,
+    name: `${project.name} (${getProjectMarketLabelFromProject(project)})`,
     clientName: project.client?.name ?? "Demó ügyfél",
-    marketLabel: getProjectMarketLabel(project.name),
-    isSelected: project.id === selectedProject.id,
+    marketLabel: getProjectMarketLabelFromProject(project),
+    isSelected: project.id === selected.id,
     isAccessible: projects.length > 0
   }));
 }
@@ -407,8 +429,9 @@ const attentionProducts: AttentionProduct[] = [
 ];
 
 function createHeader(context: OverviewDataContext): OverviewHeaderViewModel {
-  const selector = createProjectSelectorItems(context.projects);
+  const selector = createProjectSelectorItems(context.projects, context.selectedProject);
   const selected = selector.find((project) => project.isSelected) ?? selector[0];
+  const selectedProject = getSelectedProject(context);
 
   return {
     title: "Marketing áttekintés",
@@ -432,7 +455,7 @@ function createHeader(context: OverviewDataContext): OverviewHeaderViewModel {
       { value: "previous_month", label: "Előző hónap", isSelected: false },
       { value: "previous_year", label: "Előző év", isSelected: false }
     ],
-    roasTarget: "ROAS cél: 4,2",
+    roasTarget: `ROAS cél: ${formatProjectRoasTarget(selectedProject.roas_target)}`,
     lastRefreshLabel: "Utolsó adatfrissítés: ma 06:10"
   };
 }
@@ -474,13 +497,14 @@ export function createOverviewViewModel(context: OverviewDataContext): OverviewV
 
 export function createPortalShellViewModel(context: OverviewDataContext): PortalShellViewModel {
   const overview = createOverviewViewModel(context);
+  const selectedProject = getSelectedProject(context);
 
   return {
     userName: context.profileName,
     roleLabel: context.role === "agency_admin" ? "Ügynökségi admin" : "Ügyfél",
     selectedClientName: overview.header.selectedClientName,
     selectedProjectName: overview.header.selectedProjectName,
-    ppcManagerName: "Kiss Gergő",
+    ppcManagerName: selectedProject.assignedManager?.full_name ?? "KonverzióHuszár csapat",
     currentReport: reports.latestReport ?? {
       id: "missing-report",
       monthLabel: "Júliusi riport",

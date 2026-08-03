@@ -228,4 +228,5 @@ export type OverviewDataContext = {
   profileName: string;
   role: "agency_admin" | "client_user";
   projects: AccessibleProject[];
+  selectedProject: AccessibleProject | null;
 };

@@ -50,20 +50,34 @@ const projects = [
     name: "Demó HU",
     slug: "demo-hu",
     status: "active",
-    client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" }
+    country_code: "HU",
+    market_label: "HU",
+    currency_code: "HUF",
+    roas_target: "4.2",
+    report_day: 5,
+    assigned_manager_profile_id: "manager-1",
+    client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" },
+    assignedManager: {
+      id: "manager-1",
+      full_name: "Teszt PPC manager",
+      email: "manager@example.invalid",
+      avatar_url: null
+    }
   }
 ] satisfies AccessibleProject[];
 
 const overview = createOverviewViewModel({
   profileName: "Agency Admin",
   projects,
-  role: "agency_admin"
+  role: "agency_admin",
+  selectedProject: projects[0] ?? null
 });
 
 const shell = createPortalShellViewModel({
   profileName: "Agency Admin",
   projects,
-  role: "agency_admin"
+  role: "agency_admin",
+  selectedProject: projects[0] ?? null
 });
 
 afterEach(() => cleanup());

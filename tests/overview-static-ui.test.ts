@@ -15,29 +15,54 @@ import {
 } from "@/lib/overview/validation";
 import type { AccessibleProject } from "@/lib/auth/session";
 
-const projects = [
-  {
-    id: "project-demo-hu",
+function createProject(input: {
+  id: string;
+  name: string;
+  slug: string;
+  marketLabel: string;
+}): AccessibleProject {
+  return {
+    id: input.id,
     client_id: "client-demo",
+    name: input.name,
+    slug: input.slug,
+    status: "active",
+    country_code: input.marketLabel,
+    market_label: input.marketLabel,
+    currency_code: "HUF",
+    roas_target: "4.2",
+    report_day: 5,
+    assigned_manager_profile_id: "manager-1",
+    client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" },
+    assignedManager: {
+      id: "manager-1",
+      full_name: "Teszt PPC manager",
+      email: "manager@example.invalid",
+      avatar_url: null
+    }
+  };
+}
+
+const projects = [
+  createProject({
+    id: "project-demo-hu",
     name: "Demó HU",
     slug: "demo-hu",
-    status: "active",
-    client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" }
-  },
-  {
+    marketLabel: "HU"
+  }),
+  createProject({
     id: "project-demo-ro",
-    client_id: "client-demo",
     name: "Demó RO",
     slug: "demo-ro",
-    status: "active",
-    client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" }
-  }
+    marketLabel: "RO"
+  })
 ] satisfies AccessibleProject[];
 
 const overview = createOverviewViewModel({
   profileName: "Agency Admin",
   role: "agency_admin",
-  projects
+  projects,
+  selectedProject: projects[0] ?? null
 });
 
 describe("overview static view model", () => {
@@ -81,6 +106,20 @@ describe("overview static view model", () => {
 
     expect(selector).toHaveLength(1);
     expect(selector[0]?.isAccessible).toBe(false);
+  });
+
+  it("uses the selected project context without changing the static fallback content", () => {
+    const selectedOverview = createOverviewViewModel({
+      profileName: "Agency Admin",
+      role: "agency_admin",
+      projects,
+      selectedProject: projects[1] ?? null
+    });
+
+    expect(selectedOverview.header.selectedProjectName).toBe("Demó RO (RO)");
+    expect(selectedOverview.header.selectedClientName).toBe("Demó ügyfél");
+    expect(selectedOverview.kpis).toHaveLength(6);
+    expect(selectedOverview.attentionProducts[0]?.name).toBe("Demó Flex Pro deréktámasz");
   });
 
   it("does not render client-specific static copy in the dashboard fixture", () => {
