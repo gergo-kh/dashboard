@@ -16,16 +16,14 @@ import { PerformanceChart } from "@/components/overview/performance-chart";
 import { ReportsCard } from "@/components/overview/reports-card";
 import { EmptyState } from "@/components/ui/state";
 import { createOverviewViewModel } from "@/lib/overview/static-data";
+import { getOverviewDataContext } from "@/lib/overview/service";
 
 export default async function PortalHomePage() {
   const currentUser = await requireCurrentUser();
-  const overview = createOverviewViewModel({
-    profileName: currentUser.profile.full_name,
-    role: currentUser.profile.role,
-    projects: currentUser.projects
-  });
+  const overviewContext = getOverviewDataContext({ currentUser });
+  const overview = createOverviewViewModel(overviewContext);
 
-  if (currentUser.projects.length === 0) {
+  if (overviewContext.projects.length === 0) {
     return (
       <section className="kh-overview-page" aria-labelledby="overview-title">
         <h1 id="overview-title">Marketing áttekintés</h1>

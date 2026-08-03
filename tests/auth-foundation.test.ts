@@ -40,23 +40,53 @@ const clientProfile = {
   client_id: "client-1"
 } satisfies UserProfile;
 
+function createProject(input: {
+  id: string;
+  clientId: string;
+  name: string;
+  slug: string;
+  clientName: string;
+  clientSlug: string;
+}): AccessibleProject {
+  return {
+    id: input.id,
+    client_id: input.clientId,
+    name: input.name,
+    slug: input.slug,
+    status: "active",
+    country_code: "HU",
+    market_label: "HU",
+    currency_code: "HUF",
+    roas_target: "4.2",
+    report_day: 5,
+    assigned_manager_profile_id: "user-1",
+    client: { id: input.clientId, name: input.clientName, slug: input.clientSlug },
+    assignedManager: {
+      id: "user-1",
+      full_name: "Agency Admin",
+      email: "agency-admin@example.invalid",
+      avatar_url: null
+    }
+  };
+}
+
 const projects = [
-  {
+  createProject({
     id: "project-1",
-    client_id: "client-1",
+    clientId: "client-1",
     name: "Demó HU",
     slug: "demo-hu",
-    status: "active",
-    client: { id: "client-1", name: "Demó ügyfél", slug: "demo-client" }
-  },
-  {
+    clientName: "Demó ügyfél",
+    clientSlug: "demo-client"
+  }),
+  createProject({
     id: "project-2",
-    client_id: "client-2",
+    clientId: "client-2",
     name: "Other HU",
     slug: "other-hu",
-    status: "active",
-    client: { id: "client-2", name: "Other", slug: "other" }
-  }
+    clientName: "Other",
+    clientSlug: "other"
+  })
 ] satisfies AccessibleProject[];
 
 describe("auth route decisions", () => {

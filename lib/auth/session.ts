@@ -7,12 +7,28 @@ export type UserProfile = Database["public"]["Tables"]["profiles"]["Row"];
 
 export type AccessibleProject = Pick<
   Database["public"]["Tables"]["projects"]["Row"],
-  "id" | "client_id" | "name" | "slug" | "status"
+  | "id"
+  | "client_id"
+  | "name"
+  | "slug"
+  | "status"
+  | "country_code"
+  | "market_label"
+  | "currency_code"
+  | "roas_target"
+  | "report_day"
+  | "assigned_manager_profile_id"
 > & {
   client: {
     id: string;
     name: string;
     slug: string;
+  } | null;
+  assignedManager: {
+    id: string;
+    full_name: string;
+    email: string;
+    avatar_url: string | null;
   } | null;
 };
 
@@ -92,12 +108,28 @@ export function resolveCurrentUser({
 
 type ProjectQueryRow = Pick<
   Database["public"]["Tables"]["projects"]["Row"],
-  "id" | "client_id" | "name" | "slug" | "status"
+  | "id"
+  | "client_id"
+  | "name"
+  | "slug"
+  | "status"
+  | "country_code"
+  | "market_label"
+  | "currency_code"
+  | "roas_target"
+  | "report_day"
+  | "assigned_manager_profile_id"
 > & {
   clients: {
     id: string;
     name: string;
     slug: string;
+  } | null;
+  assigned_manager: {
+    id: string;
+    full_name: string;
+    email: string;
+    avatar_url: string | null;
   } | null;
 };
 
@@ -108,7 +140,14 @@ function toAccessibleProject(project: ProjectQueryRow): AccessibleProject {
     name: project.name,
     slug: project.slug,
     status: project.status,
-    client: project.clients
+    country_code: project.country_code,
+    market_label: project.market_label,
+    currency_code: project.currency_code,
+    roas_target: project.roas_target,
+    report_day: project.report_day,
+    assigned_manager_profile_id: project.assigned_manager_profile_id,
+    client: project.clients,
+    assignedManager: project.assigned_manager
   };
 }
 
@@ -116,7 +155,9 @@ export async function getAccessibleProjects(profile: UserProfile) {
   const supabase = await createServerSupabaseClient();
   const projectQuery = supabase
     .from("projects")
-    .select("id, client_id, name, slug, status, clients(id, name, slug)");
+    .select(
+      "id, client_id, name, slug, status, country_code, market_label, currency_code, roas_target, report_day, assigned_manager_profile_id, clients(id, name, slug), assigned_manager:profiles!projects_assigned_manager_profile_id_fkey(id, full_name, email, avatar_url)"
+    );
 
   const scopedQuery = (() => {
     if (profile.role !== "client_user") {
