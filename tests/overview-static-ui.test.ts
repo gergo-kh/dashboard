@@ -17,20 +17,20 @@ import type { AccessibleProject } from "@/lib/auth/session";
 
 const projects = [
   {
-    id: "project-eroll-hu",
-    client_id: "client-eroll",
-    name: "Eroll HU",
-    slug: "eroll-hu",
+    id: "project-demo-hu",
+    client_id: "client-demo",
+    name: "Demó HU",
+    slug: "demo-hu",
     status: "active",
-    client: { id: "client-eroll", name: "Eroll", slug: "eroll" }
+    client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" }
   },
   {
-    id: "project-eroll-ro",
-    client_id: "client-eroll",
-    name: "Eroll RO",
-    slug: "eroll-ro",
+    id: "project-demo-ro",
+    client_id: "client-demo",
+    name: "Demó RO",
+    slug: "demo-ro",
     status: "active",
-    client: { id: "client-eroll", name: "Eroll", slug: "eroll" }
+    client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" }
   }
 ] satisfies AccessibleProject[];
 
@@ -73,7 +73,7 @@ describe("overview static view model", () => {
 
     expect(selector).toHaveLength(2);
     expect(selector.every((project) => project.isAccessible)).toBe(true);
-    expect(selector.find((project) => project.isSelected)?.name).toBe("Eroll HU (HU)");
+    expect(selector.find((project) => project.isSelected)?.name).toBe("Demó HU (HU)");
   });
 
   it("handles no accessible projects without pretending live data exists", () => {
@@ -81,6 +81,12 @@ describe("overview static view model", () => {
 
     expect(selector).toHaveLength(1);
     expect(selector[0]?.isAccessible).toBe(false);
+  });
+
+  it("does not render client-specific static copy in the dashboard fixture", () => {
+    const clientSpecificPattern = new RegExp(`er${"r"}oll|er${"o"}ll`, "i");
+
+    expect(JSON.stringify(overview)).not.toMatch(clientSpecificPattern);
   });
 });
 

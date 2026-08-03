@@ -45,12 +45,12 @@ vi.mock("recharts", async () => {
 
 const projects = [
   {
-    id: "project-eroll-hu",
-    client_id: "client-eroll",
-    name: "Eroll HU",
-    slug: "eroll-hu",
+    id: "project-demo-hu",
+    client_id: "client-demo",
+    name: "Demó HU",
+    slug: "demo-hu",
     status: "active",
-    client: { id: "client-eroll", name: "Eroll", slug: "eroll" }
+    client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" }
   }
 ] satisfies AccessibleProject[];
 

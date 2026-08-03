@@ -16,7 +16,7 @@ import type {
   ClientActionItem
 } from "@/types/overview";
 
-const fallbackProjectId = "eroll-hu-static";
+const fallbackProjectId = "demo-hu-static";
 
 function getProjectMarketLabel(projectName: string) {
   const upperName = projectName.toUpperCase();
@@ -42,17 +42,17 @@ function getProjectMarketLabel(projectName: string) {
 
 function getSelectedProject(projects: AccessibleProject[]) {
   return (
-    projects.find((project) => project.slug === "eroll-hu") ??
+    projects.find((project) => project.slug === "demo-hu") ??
     projects[0] ?? {
       id: fallbackProjectId,
-      name: "Eroll HU",
-      slug: "eroll-hu",
+      name: "Demó HU",
+      slug: "demo-hu",
       status: "active",
-      client_id: "eroll-static",
+      client_id: "demo-static",
       client: {
-        id: "eroll-static",
-        name: "Eroll",
-        slug: "eroll"
+        id: "demo-static",
+        name: "Demó ügyfél",
+        slug: "demo-client"
       }
     }
   );
@@ -65,7 +65,7 @@ export function createProjectSelectorItems(projects: AccessibleProject[]) {
   return sourceProjects.map((project) => ({
     id: project.id,
     name: `${project.name} (${getProjectMarketLabel(project.name)})`,
-    clientName: project.client?.name ?? "Eroll",
+    clientName: project.client?.name ?? "Demó ügyfél",
     marketLabel: getProjectMarketLabel(project.name),
     isSelected: project.id === selectedProject.id,
     isAccessible: projects.length > 0
@@ -398,12 +398,12 @@ const reports: ReportsViewModel = {
 };
 
 const attentionProducts: AttentionProduct[] = [
-  { id: "p-01", name: "Eroll Flex Pro deréktámasz", sku: "ER-HU-1024", spendLabel: "684 000 Ft", revenueLabel: "1,1 M Ft", roasLabel: "1,61", issue: "low_efficiency", issueLabel: "alacsony hatékonyság", detail: "A költés magasabb, mint amit a termék ROAS-a indokol." },
-  { id: "p-02", name: "Eroll Office Max szék", sku: "ER-HU-2241", spendLabel: "512 000 Ft", revenueLabel: "620 000 Ft", roasLabel: "1,21", issue: "high_spend_low_purchase", issueLabel: "magas költés, kevés vásárlás", detail: "Sok kattintás után kevés vásárlás érkezik." },
-  { id: "p-03", name: "Eroll Basic állítható karfa", sku: "ER-HU-3188", spendLabel: "86 000 Ft", revenueLabel: "0 Ft", roasLabel: "nincs adat", issue: "missing_gtin", issueLabel: "hiányzó GTIN", detail: "Az azonosító hiánya korlátozza a Merchant megjelenést." },
-  { id: "p-04", name: "Eroll Comfort Plus ülőlap", sku: "ER-HU-4410", spendLabel: "192 000 Ft", revenueLabel: "255 000 Ft", roasLabel: "1,33", issue: "poor_feed_quality", issueLabel: "gyenge feedminőség", detail: "A title és leírás nem tartalmazza a fő termékelőnyöket." },
-  { id: "p-05", name: "Eroll Mesh háttámla", sku: "ER-HU-5172", spendLabel: "74 000 Ft", revenueLabel: "nincs adat", roasLabel: "nincs adat", issue: "disapproved", issueLabel: "elutasított termék", detail: "Merchant policy ellenőrzés szükséges." },
-  { id: "p-06", name: "Eroll Executive fejtámla", sku: "ER-HU-6301", spendLabel: "118 000 Ft", revenueLabel: "186 000 Ft", roasLabel: "1,58", issue: "poor_feed_quality", issueLabel: "gyenge feedminőség", detail: "A képek és attribútumok javítása várhatóan növeli a lefedettséget." }
+  { id: "p-01", name: "Demó Flex Pro deréktámasz", sku: "DM-HU-1024", spendLabel: "684 000 Ft", revenueLabel: "1,1 M Ft", roasLabel: "1,61", issue: "low_efficiency", issueLabel: "alacsony hatékonyság", detail: "A költés magasabb, mint amit a termék ROAS-a indokol." },
+  { id: "p-02", name: "Demó Office Max szék", sku: "DM-HU-2241", spendLabel: "512 000 Ft", revenueLabel: "620 000 Ft", roasLabel: "1,21", issue: "high_spend_low_purchase", issueLabel: "magas költés, kevés vásárlás", detail: "Sok kattintás után kevés vásárlás érkezik." },
+  { id: "p-03", name: "Demó Basic állítható karfa", sku: "DM-HU-3188", spendLabel: "86 000 Ft", revenueLabel: "0 Ft", roasLabel: "nincs adat", issue: "missing_gtin", issueLabel: "hiányzó GTIN", detail: "Az azonosító hiánya korlátozza a Merchant megjelenést." },
+  { id: "p-04", name: "Demó Comfort Plus ülőlap", sku: "DM-HU-4410", spendLabel: "192 000 Ft", revenueLabel: "255 000 Ft", roasLabel: "1,33", issue: "poor_feed_quality", issueLabel: "gyenge feedminőség", detail: "A title és leírás nem tartalmazza a fő termékelőnyöket." },
+  { id: "p-05", name: "Demó Mesh háttámla", sku: "DM-HU-5172", spendLabel: "74 000 Ft", revenueLabel: "nincs adat", roasLabel: "nincs adat", issue: "disapproved", issueLabel: "elutasított termék", detail: "Merchant policy ellenőrzés szükséges." },
+  { id: "p-06", name: "Demó Executive fejtámla", sku: "DM-HU-6301", spendLabel: "118 000 Ft", revenueLabel: "186 000 Ft", roasLabel: "1,58", issue: "poor_feed_quality", issueLabel: "gyenge feedminőség", detail: "A képek és attribútumok javítása várhatóan növeli a lefedettséget." }
 ];
 
 function createHeader(context: OverviewDataContext): OverviewHeaderViewModel {
@@ -412,7 +412,7 @@ function createHeader(context: OverviewDataContext): OverviewHeaderViewModel {
 
   return {
     title: "Marketing áttekintés",
-    subtitle: "Eroll HU júliusi teljesítménye és a KonverzióHuszár aktuális munkája.",
+    subtitle: "A kiválasztott projekt júliusi teljesítménye és a KonverzióHuszár aktuális munkája.",
     projectSelector: selector,
     selectedProjectName: selected?.name ?? "Nincs elérhető projekt",
     selectedClientName: selected?.clientName ?? "Nincs kiválasztott ügyfél",
