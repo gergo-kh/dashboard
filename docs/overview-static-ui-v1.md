@@ -64,7 +64,7 @@ Static data is created in `lib/overview/static-data.ts` and includes:
 - reports
 - attention products
 
-The default rendered dataset is one coherent Eroll HU example.
+The default rendered dataset is one coherent neutral demonstration example.
 
 ## Static Placeholder Strategy
 

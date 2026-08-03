@@ -44,10 +44,10 @@ const projects = [
   {
     id: "project-1",
     client_id: "client-1",
-    name: "Eroll HU",
-    slug: "eroll-hu",
+    name: "Demó HU",
+    slug: "demo-hu",
     status: "active",
-    client: { id: "client-1", name: "Eroll", slug: "eroll" }
+    client: { id: "client-1", name: "Demó ügyfél", slug: "demo-client" }
   },
   {
     id: "project-2",
