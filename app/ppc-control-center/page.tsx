@@ -226,6 +226,7 @@ function asMtdRow(row: PpcClientRow): PpcClientRow {
     ...row,
     spend: row.mtdSpend,
     revenue: row.mtdRevenue,
+    purchases: row.mtdCpa && row.mtdCpa > 0 ? row.mtdSpend / row.mtdCpa : 0,
     roas: row.mtdRoas,
     cpa: row.mtdCpa,
     spendChangePct: row.mtdSpendChangePct,
