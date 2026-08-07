@@ -7,6 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "ppc:sync:google": "node scripts/sync-ppc-google-ads.mjs",
     "integration:sync:local": "vitest run tests/integration-sync-local.test.ts",
     "integration:sync:db:local": "vitest run tests/integration-sync-db-local.test.ts",
     "lint": "eslint .",
