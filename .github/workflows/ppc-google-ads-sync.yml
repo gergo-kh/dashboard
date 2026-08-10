@@ -1,8 +1,9 @@
 name: PPC Google Ads Sync
 
+# Daily scheduled sync is currently handled by the PPC Ads Sync automation.
+# Keep this workflow manual until WINDSOR_API_KEY, SUPABASE_URL and
+# SUPABASE_SERVICE_ROLE_KEY are configured as GitHub Actions repository secrets.
 on:
-  schedule:
-    - cron: "5 2 * * *"
   workflow_dispatch:
     inputs:
       as_of_date:
