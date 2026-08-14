@@ -11,6 +11,7 @@
     "integration:sync:local": "vitest run tests/integration-sync-local.test.ts",
     "integration:sync:db:local": "vitest run tests/integration-sync-db-local.test.ts",
     "test:staging-fixture": "sh scripts/verify-staging-dashboard-read-fixtures.sh",
+    "test:staging-monthly-fixture": "sh scripts/verify-staging-monthly-communication-fixtures.sh",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
