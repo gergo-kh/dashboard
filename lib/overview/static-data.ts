@@ -73,8 +73,8 @@ function getSelectedProject(context: Pick<OverviewDataContext, "projects" | "sel
   );
 }
 
-function formatProjectRoasTarget(roasTarget: string | null) {
-  return roasTarget?.replace(".", ",") ?? "4,2";
+function formatProjectRoasTarget(roasTarget: string | number | null) {
+  return roasTarget === null ? "4,2" : String(roasTarget).replace(".", ",");
 }
 
 export function createProjectSelectorItems(

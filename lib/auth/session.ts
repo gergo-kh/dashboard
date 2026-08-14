@@ -143,12 +143,32 @@ function toAccessibleProject(project: ProjectQueryRow): AccessibleProject {
     country_code: project.country_code,
     market_label: project.market_label,
     currency_code: project.currency_code,
-    roas_target: project.roas_target,
+    roas_target: normalizeNullableDecimalString(project.roas_target),
     report_day: project.report_day,
     assigned_manager_profile_id: project.assigned_manager_profile_id,
     client: project.clients,
     assignedManager: project.assigned_manager
   };
+}
+
+function normalizeNullableDecimalString(
+  value: unknown
+): Database["public"]["Tables"]["projects"]["Row"]["roas_target"] {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : null;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  return null;
 }
 
 export async function getAccessibleProjects(profile: UserProfile) {
