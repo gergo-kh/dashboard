@@ -434,11 +434,18 @@ function createHeader(context: OverviewDataContext): OverviewHeaderViewModel {
   const selectedProject = getSelectedProject(context);
   const metricsContent = context.metricsContent;
   const dateRangeLabel = metricsContent?.dateRangeLabel ?? "Július";
+  const canSwitchProjects = context.role === "agency_admin" && selector.some((project) => project.isAccessible);
 
   return {
     title: "Marketing áttekintés",
     subtitle: `A kiválasztott projekt ${dateRangeLabel.toLowerCase()} teljesítménye és a KonverzióHuszár aktuális munkája.`,
     projectSelector: selector,
+    canSwitchProjects,
+    projectSelectorHelp: canSwitchProjects
+      ? "A projektváltás az URL-ben is megmarad."
+      : context.role === "client_user"
+        ? "A kliensfiók csak a saját projektjét használhatja."
+        : "Nincs elérhető projektváltás.",
     selectedProjectName: selected?.name ?? "Nincs elérhető projekt",
     selectedClientName: selected?.clientName ?? "Nincs kiválasztott ügyfél",
     managementActivity: {

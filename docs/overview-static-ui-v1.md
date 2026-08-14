@@ -72,7 +72,8 @@ The view model is deterministic and manually authored. No random mock-data gener
 
 Static controls look production-ready but remain non-destructive:
 
-- project, date range, and comparison selectors are disabled with visible Hungarian explanations
+- agency project selector is active and persists the selected accessible project in the URL
+- client project selector, date range, and comparison selectors are disabled with visible Hungarian explanations
 - `Kérdezd az AI-t` is disabled and marked as coming soon.
 - `Riport letöltése` is disabled.
 - Merchant Center deep-link action is disabled.
@@ -153,7 +154,7 @@ The performance chart supports explicit `normal`, `loading`, `empty`, and `error
 - overview view-model validation
 - exactly six KPI cards
 - approved navigation order
-- project selector access behavior
+- project selector access, query-param, and scoping behavior
 - positive, mixed, and weak monthly outcome rendering
 - weak outcome corrective-action requirements
 - metric formatting
@@ -167,7 +168,7 @@ The performance chart supports explicit `normal`, `loading`, `empty`, and `error
 
 - chart interval switching and `aria-pressed` updates
 - chart design token configuration
-- disabled selector and action explanations
+- active agency project switching and disabled client/static-control explanations
 - disabled sidebar report actions
 - mobile drawer open/close behavior
 - dialog open/close labels and focus return
@@ -179,7 +180,7 @@ The performance chart supports explicit `normal`, `loading`, `empty`, and `error
 - No Windsor.ai integration is present.
 - No real PDF generation is present.
 - Non-overview module pages remain out of scope.
-- Project/date/comparison selector changes are intentionally disabled until live data exists.
+- Date/comparison selector changes are intentionally disabled until live period controls exist.
 - Full browser E2E coverage is not included yet.
 
 ## Remaining Work

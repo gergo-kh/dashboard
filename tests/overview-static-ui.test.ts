@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { getNavigationLabels } from "@/components/portal/navigation";
 import { formatCompactForint, formatPercent, formatRoas } from "@/lib/overview/format";
+import {
+  buildOverviewProjectHref,
+  getRequestedProjectIdFromSearchParams,
+  sanitizeOverviewProjectId
+} from "@/lib/overview/project-selection";
 import { getNavigationModeForWidth } from "@/lib/overview/responsive";
 import {
   createOverviewViewModel,
@@ -104,6 +109,7 @@ describe("overview static view model", () => {
     expect(selector).toHaveLength(2);
     expect(selector.every((project) => project.isAccessible)).toBe(true);
     expect(selector.find((project) => project.isSelected)?.name).toBe("Demó HU (HU)");
+    expect(overview.header.canSwitchProjects).toBe(true);
   });
 
   it("handles no accessible projects without pretending live data exists", () => {
@@ -128,6 +134,31 @@ describe("overview static view model", () => {
     expect(selectedOverview.header.selectedClientName).toBe("Demó ügyfél");
     expect(selectedOverview.kpis).toHaveLength(6);
     expect(selectedOverview.attentionProducts[0]?.name).toBe("Demó Flex Pro deréktámasz");
+  });
+
+  it("sanitizes project query params before server-side project selection", () => {
+    expect(sanitizeOverviewProjectId("project-demo-hu")).toBe("project-demo-hu");
+    expect(sanitizeOverviewProjectId(" 90000000-0000-4000-8000-000000000011 ")).toBe(
+      "90000000-0000-4000-8000-000000000011"
+    );
+    expect(sanitizeOverviewProjectId("../project")).toBeUndefined();
+    expect(sanitizeOverviewProjectId("")).toBeUndefined();
+    expect(sanitizeOverviewProjectId("x".repeat(129))).toBeUndefined();
+    expect(
+      getRequestedProjectIdFromSearchParams({
+        projectId: ["project-demo-ro", "project-demo-hu"]
+      })
+    ).toBe("project-demo-ro");
+  });
+
+  it("builds project selector links without dropping existing URL state", () => {
+    expect(
+      buildOverviewProjectHref({
+        pathname: "/",
+        searchParams: new URLSearchParams("view=overview"),
+        projectId: "project-demo-ro"
+      })
+    ).toBe("/?view=overview&projectId=project-demo-ro");
   });
 
   it("handles runtime numeric ROAS targets from Supabase without crashing", () => {
