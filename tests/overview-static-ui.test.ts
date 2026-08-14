@@ -64,7 +64,8 @@ const overview = createOverviewViewModel({
   projects,
   selectedProject: projects[0] ?? null,
   monthlyContent: null,
-  metricsContent: null
+  metricsContent: null,
+  merchantContent: null
 });
 
 describe("overview static view model", () => {
@@ -117,7 +118,8 @@ describe("overview static view model", () => {
       projects,
       selectedProject: projects[1] ?? null,
       monthlyContent: null,
-      metricsContent: null
+      metricsContent: null,
+      merchantContent: null
     });
 
     expect(selectedOverview.header.selectedProjectName).toBe("Demó RO (RO)");

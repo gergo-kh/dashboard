@@ -11,6 +11,12 @@ import {
   type OverviewMetricsRows
 } from "@/lib/overview/daily-metrics";
 import type {
+  MerchantAttentionRows,
+  MerchantProductContentRow,
+  ProductDailyMetricContentRow,
+  ProductIssueContentRow
+} from "@/lib/overview/merchant-products";
+import type {
   ClientActionContentRow,
   MonthlyOverviewContentRows,
   MonthlyReviewContentRow,
@@ -33,6 +39,7 @@ export type OverviewRepository = {
   }): OverviewProjectContext | null;
   getMonthlyOverviewContentRows(projectId: string): Promise<MonthlyOverviewContentRows>;
   getOverviewMetricsRows(project: OverviewProjectContext): Promise<OverviewMetricsRows>;
+  getMerchantAttentionRows(project: OverviewProjectContext): Promise<MerchantAttentionRows>;
 };
 
 export function createOverviewRepository(
@@ -74,6 +81,14 @@ export function createOverviewRepository(
       }
 
       return getOverviewMetricsRows(supabase, project);
+    },
+
+    async getMerchantAttentionRows(project) {
+      if (!supabase) {
+        return createEmptyMerchantAttentionRows(project);
+      }
+
+      return getMerchantAttentionRows(supabase, project);
     }
   };
 }
@@ -85,6 +100,15 @@ function createEmptyOverviewMetricsRows(project: OverviewProjectContext): Overvi
     period: null,
     projectCurrencyCode: project.currency_code,
     roasTarget: project.roas_target
+  };
+}
+
+function createEmptyMerchantAttentionRows(project: OverviewProjectContext): MerchantAttentionRows {
+  return {
+    products: [],
+    metrics: [],
+    issues: [],
+    projectCurrencyCode: project.currency_code
   };
 }
 
@@ -257,6 +281,125 @@ async function getDailyMetricRows(
 
   if (error) {
     throw new Error("Could not load daily metric rows.");
+  }
+
+  return data;
+}
+
+async function getMerchantAttentionRows(
+  supabase: SupabaseClient<Database>,
+  project: OverviewProjectContext
+): Promise<MerchantAttentionRows> {
+  const products = await getVisibleMerchantProducts(supabase, project.id);
+  const productIds = products.map((product) => product.id);
+
+  if (productIds.length === 0) {
+    return createEmptyMerchantAttentionRows(project);
+  }
+
+  const latestMetricDate = await getLatestProductMetricDate(supabase, project.id, productIds);
+  const [issues, metrics] = await Promise.all([
+    getOpenProductIssues(supabase, project.id, productIds),
+    latestMetricDate
+      ? getProductDailyMetricRows(
+          supabase,
+          project.id,
+          productIds,
+          createMetricPeriods(latestMetricDate).currentStart,
+          latestMetricDate
+        )
+      : Promise.resolve([])
+  ]);
+
+  return {
+    products,
+    metrics,
+    issues,
+    projectCurrencyCode: project.currency_code
+  };
+}
+
+async function getVisibleMerchantProducts(
+  supabase: SupabaseClient<Database>,
+  projectId: string
+): Promise<MerchantProductContentRow[]> {
+  const { data, error } = await supabase
+    .from("merchant_products")
+    .select("id, project_id, external_product_id, title, gtin, approval_status, updated_at")
+    .eq("project_id", projectId)
+    .or("approval_status.is.null,approval_status.not.in.(draft,hidden)")
+    .order("last_seen_at", { ascending: false })
+    .limit(80)
+    .returns<MerchantProductContentRow[]>();
+
+  if (error) {
+    throw new Error("Could not load merchant products.");
+  }
+
+  return data;
+}
+
+async function getLatestProductMetricDate(
+  supabase: SupabaseClient<Database>,
+  projectId: string,
+  productIds: string[]
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("product_daily_metrics")
+    .select("metric_date")
+    .eq("project_id", projectId)
+    .in("merchant_product_id", productIds)
+    .order("metric_date", { ascending: false })
+    .limit(1)
+    .returns<Array<{ metric_date: string }>>();
+
+  if (error) {
+    throw new Error("Could not load latest product metric date.");
+  }
+
+  return data[0]?.metric_date ?? null;
+}
+
+async function getProductDailyMetricRows(
+  supabase: SupabaseClient<Database>,
+  projectId: string,
+  productIds: string[],
+  startDate: string,
+  endDate: string
+): Promise<ProductDailyMetricContentRow[]> {
+  const { data, error } = await supabase
+    .from("product_daily_metrics")
+    .select("merchant_product_id, metric_date, spend, revenue, purchases")
+    .eq("project_id", projectId)
+    .in("merchant_product_id", productIds)
+    .gte("metric_date", startDate)
+    .lte("metric_date", endDate)
+    .returns<ProductDailyMetricContentRow[]>();
+
+  if (error) {
+    throw new Error("Could not load product daily metrics.");
+  }
+
+  return data;
+}
+
+async function getOpenProductIssues(
+  supabase: SupabaseClient<Database>,
+  projectId: string,
+  productIds: string[]
+): Promise<ProductIssueContentRow[]> {
+  const { data, error } = await supabase
+    .from("product_issues")
+    .select("id, merchant_product_id, issue_type, severity, title, description, recommendation, status, detected_at")
+    .eq("project_id", projectId)
+    .in("merchant_product_id", productIds)
+    .in("status", ["open", "in_progress"])
+    .order("detected_at", { ascending: false })
+    .limit(80)
+    .returns<ProductIssueContentRow[]>();
+
+  if (error) {
+    throw new Error("Could not load product issues.");
   }
 
   return data;

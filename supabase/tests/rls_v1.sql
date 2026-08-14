@@ -1,6 +1,6 @@
 begin;
 
-select plan(12);
+select plan(18);
 
 insert into auth.users (
   id,
@@ -207,6 +207,125 @@ values (
   now()
 );
 
+insert into public.merchant_products (
+  id,
+  project_id,
+  external_product_id,
+  title,
+  gtin,
+  approval_status
+)
+values
+  (
+    '80000000-0000-4000-8000-000000000001',
+    '30000000-0000-4000-8000-000000000001',
+    'VISIBLE-PRODUCT',
+    'Visible merchant product',
+    '5990000000001',
+    'approved'
+  ),
+  (
+    '80000000-0000-4000-8000-000000000002',
+    '30000000-0000-4000-8000-000000000001',
+    'HIDDEN-PRODUCT',
+    'Hidden merchant product',
+    null,
+    'hidden'
+  ),
+  (
+    '80000000-0000-4000-8000-000000000003',
+    '30000000-0000-4000-8000-000000000003',
+    'OTHER-CLIENT-PRODUCT',
+    'Other client merchant product',
+    null,
+    'approved'
+  );
+
+insert into public.product_daily_metrics (
+  id,
+  project_id,
+  merchant_product_id,
+  metric_date,
+  spend,
+  revenue,
+  purchases
+)
+values
+  (
+    '81000000-0000-4000-8000-000000000001',
+    '30000000-0000-4000-8000-000000000001',
+    '80000000-0000-4000-8000-000000000001',
+    '2026-07-31',
+    120000,
+    240000,
+    4
+  ),
+  (
+    '81000000-0000-4000-8000-000000000002',
+    '30000000-0000-4000-8000-000000000001',
+    '80000000-0000-4000-8000-000000000002',
+    '2026-07-31',
+    50000,
+    0,
+    0
+  ),
+  (
+    '81000000-0000-4000-8000-000000000003',
+    '30000000-0000-4000-8000-000000000003',
+    '80000000-0000-4000-8000-000000000003',
+    '2026-07-31',
+    999999,
+    999999,
+    1
+  );
+
+insert into public.product_issues (
+  id,
+  project_id,
+  merchant_product_id,
+  issue_type,
+  severity,
+  title,
+  status
+)
+values
+  (
+    '82000000-0000-4000-8000-000000000001',
+    '30000000-0000-4000-8000-000000000001',
+    '80000000-0000-4000-8000-000000000001',
+    'missing_gtin',
+    'high',
+    'Visible product issue',
+    'open'
+  ),
+  (
+    '82000000-0000-4000-8000-000000000002',
+    '30000000-0000-4000-8000-000000000001',
+    '80000000-0000-4000-8000-000000000002',
+    'feed_quality',
+    'high',
+    'Hidden product issue',
+    'open'
+  ),
+  (
+    '82000000-0000-4000-8000-000000000003',
+    '30000000-0000-4000-8000-000000000003',
+    '80000000-0000-4000-8000-000000000003',
+    'performance',
+    'critical',
+    'Other client product issue',
+    'open'
+  ),
+  (
+    '82000000-0000-4000-8000-000000000004',
+    '30000000-0000-4000-8000-000000000001',
+    '80000000-0000-4000-8000-000000000001',
+    'draft_issue',
+    'medium',
+    'Draft product issue',
+    'draft'
+  );
+
 set local role authenticated;
 do $$
 begin
@@ -404,6 +523,76 @@ select is(
   ),
   0,
   'client_user cannot read hidden optimization items'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.merchant_products
+    where id = '80000000-0000-4000-8000-000000000001'
+  ),
+  1,
+  'client_user can read visible merchant products for their project'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.merchant_products
+    where id in (
+      '80000000-0000-4000-8000-000000000002',
+      '80000000-0000-4000-8000-000000000003'
+    )
+  ),
+  0,
+  'client_user cannot read hidden or other-client merchant products'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.product_daily_metrics
+    where id = '81000000-0000-4000-8000-000000000001'
+  ),
+  1,
+  'client_user can read product metrics for visible products in their project'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.product_daily_metrics
+    where id in (
+      '81000000-0000-4000-8000-000000000002',
+      '81000000-0000-4000-8000-000000000003'
+    )
+  ),
+  0,
+  'client_user cannot read product metrics for hidden or other-client products'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.product_issues
+    where id = '82000000-0000-4000-8000-000000000001'
+  ),
+  1,
+  'client_user can read active product issues for visible products in their project'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.product_issues
+    where id in (
+      '82000000-0000-4000-8000-000000000002',
+      '82000000-0000-4000-8000-000000000003',
+      '82000000-0000-4000-8000-000000000004'
+    )
+  ),
+  0,
+  'client_user cannot read hidden, draft, or other-client product issues'
 );
 
 select * from finish();

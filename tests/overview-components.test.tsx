@@ -76,7 +76,8 @@ const overview = createOverviewViewModel({
   role: "agency_admin",
   selectedProject: projects[0] ?? null,
   monthlyContent: null,
-  metricsContent: null
+  metricsContent: null,
+  merchantContent: null
 });
 
 const shell = createPortalShellViewModel({
@@ -85,7 +86,8 @@ const shell = createPortalShellViewModel({
   role: "agency_admin",
   selectedProject: projects[0] ?? null,
   monthlyContent: null,
-  metricsContent: null
+  metricsContent: null,
+  merchantContent: null
 });
 
 afterEach(() => cleanup());
