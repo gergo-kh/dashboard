@@ -242,4 +242,5 @@ export type OverviewDataContext = {
   selectedProject: AccessibleProject | null;
   monthlyContent: MonthlyOverviewContent | null;
   metricsContent: OverviewMetricsContent | null;
+  merchantContent: AttentionProduct[] | null;
 };

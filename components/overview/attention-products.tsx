@@ -17,7 +17,7 @@ export function AttentionProducts({ products }: AttentionProductsProps) {
 
       {products.length === 0 ? (
         <EmptyState
-          description="Most nincs kiemelt Merchant termékhiba a statikus előnézetben."
+          description="Most nincs ügyféloldalon megjeleníthető, figyelmet igénylő Merchant termék."
           title="Nincs figyelmet igénylő termék"
         />
       ) : (

@@ -9,6 +9,10 @@ import {
   createOverviewMetricsContent
 } from "@/lib/overview/daily-metrics";
 import {
+  createEmptyMerchantAttentionProducts,
+  createMerchantAttentionProducts
+} from "@/lib/overview/merchant-products";
+import {
   createOverviewRepository,
   type OverviewRepository
 } from "@/lib/overview/repository";
@@ -35,7 +39,7 @@ export async function getOverviewDataContext({
     projects,
     requestedProjectId
   });
-  const [monthlyContent, metricsContent] = selectedProject
+  const [monthlyContent, metricsContent, merchantContent] = selectedProject
     ? await Promise.all([
         repository
           .getMonthlyOverviewContentRows(selectedProject.id)
@@ -47,11 +51,16 @@ export async function getOverviewDataContext({
           .catch(() => createEmptyOverviewMetricsContent({
             projectCurrencyCode: selectedProject.currency_code,
             roasTarget: selectedProject.roas_target
-          }))
+          })),
+        repository
+          .getMerchantAttentionRows(selectedProject)
+          .then((rows) => createMerchantAttentionProducts(rows))
+          .catch(() => createEmptyMerchantAttentionProducts())
       ])
     : [
         createEmptyMonthlyOverviewContent(),
-        createEmptyOverviewMetricsContent()
+        createEmptyOverviewMetricsContent(),
+        createEmptyMerchantAttentionProducts()
       ];
 
   return {
@@ -60,7 +69,8 @@ export async function getOverviewDataContext({
     projects,
     selectedProject,
     monthlyContent,
-    metricsContent
+    metricsContent,
+    merchantContent
   };
 }
 

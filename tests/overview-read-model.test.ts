@@ -154,6 +154,7 @@ describe("overview read model foundation", () => {
   it("loads monthly overview rows for the selected accessible project", async () => {
     const requestedProjectIds: string[] = [];
     const metricProjectIds: string[] = [];
+    const merchantProjectIds: string[] = [];
     const baseRepository = createOverviewRepository();
     const repository: OverviewRepository = {
       ...baseRepository,
@@ -196,6 +197,16 @@ describe("overview read model foundation", () => {
           projectCurrencyCode: project.currency_code,
           roasTarget: project.roas_target
         };
+      },
+      async getMerchantAttentionRows(project) {
+        merchantProjectIds.push(project.id);
+
+        return {
+          products: [],
+          metrics: [],
+          issues: [],
+          projectCurrencyCode: project.currency_code
+        };
       }
     };
 
@@ -207,8 +218,10 @@ describe("overview read model foundation", () => {
 
     expect(requestedProjectIds).toEqual(["project-2"]);
     expect(metricProjectIds).toEqual(["project-2"]);
+    expect(merchantProjectIds).toEqual(["project-2"]);
     expect(context.monthlyContent?.monthlySummary.text).toBe("Jóváhagyott havi szöveg.");
     expect(context.metricsContent?.performanceChart.state).toBe("empty");
+    expect(context.merchantContent).toEqual([]);
   });
 
   it("returns safe monthly empty state when selected project content cannot load", async () => {
@@ -249,5 +262,23 @@ describe("overview read model foundation", () => {
     expect(context.metricsContent?.kpis.every((kpi) => kpi.currentValue === "nincs adat")).toBe(
       true
     );
+  });
+
+  it("returns safe merchant empty state when selected project products cannot load", async () => {
+    const baseRepository = createOverviewRepository();
+    const repository: OverviewRepository = {
+      ...baseRepository,
+      async getMerchantAttentionRows() {
+        throw new Error("Simulated merchant repository failure");
+      }
+    };
+
+    const context = await getOverviewDataContext({
+      currentUser: createCurrentUser(agencyProfile),
+      repository
+    });
+
+    expect(context.selectedProject?.id).toBe("project-1");
+    expect(context.merchantContent).toEqual([]);
   });
 });

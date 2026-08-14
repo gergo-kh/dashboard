@@ -465,6 +465,7 @@ function createHeader(context: OverviewDataContext): OverviewHeaderViewModel {
 export function createOverviewViewModel(context: OverviewDataContext): OverviewViewModel {
   const monthlyContent = context.monthlyContent;
   const metricsContent = context.metricsContent;
+  const merchantContent = context.merchantContent;
 
   return {
     header: createHeader(context),
@@ -496,7 +497,7 @@ export function createOverviewViewModel(context: OverviewDataContext): OverviewV
     clientActions: monthlyContent?.clientActions ?? clientActions,
     nextMonthPlan: monthlyContent?.nextMonthPlan ?? nextMonthPlan,
     reports: monthlyContent?.reports ?? reports,
-    attentionProducts
+    attentionProducts: merchantContent ?? attentionProducts
   };
 }
 
