@@ -62,7 +62,8 @@ const overview = createOverviewViewModel({
   profileName: "Agency Admin",
   role: "agency_admin",
   projects,
-  selectedProject: projects[0] ?? null
+  selectedProject: projects[0] ?? null,
+  monthlyContent: null
 });
 
 describe("overview static view model", () => {
@@ -113,7 +114,8 @@ describe("overview static view model", () => {
       profileName: "Agency Admin",
       role: "agency_admin",
       projects,
-      selectedProject: projects[1] ?? null
+      selectedProject: projects[1] ?? null,
+      monthlyContent: null
     });
 
     expect(selectedOverview.header.selectedProjectName).toBe("Demó RO (RO)");

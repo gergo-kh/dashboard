@@ -27,6 +27,17 @@ type NextMonthPlanCardProps = Readonly<{
 }>;
 
 export function WorkInProgressCard({ items }: WorkInProgressCardProps) {
+  if (items.length === 0) {
+    return (
+      <article className="kh-card kh-action-card">
+        <CardTitle kicker="Aktuális munka" title="Min dolgozunk most?" />
+        <p className="kh-muted-tight">
+          Most nincs ügyféloldalon megjeleníthető aktuális munka ehhez a projekthez.
+        </p>
+      </article>
+    );
+  }
+
   return (
     <article className="kh-card kh-action-card">
       <CardTitle kicker="Aktuális munka" title="Min dolgozunk most?" />
@@ -55,6 +66,17 @@ export function CompletedWorkCard({ items }: CompletedWorkCardProps) {
   });
   const visibleItems = items.slice(0, 6);
   const hiddenCount = 12;
+
+  if (items.length === 0) {
+    return (
+      <article className="kh-card kh-action-card">
+        <CardTitle kicker="Elvégzett munka" title="Mit csináltunk ebben a hónapban?" />
+        <p className="kh-muted-tight">
+          Ehhez a projekthez még nincs publikált elvégzett optimalizálás.
+        </p>
+      </article>
+    );
+  }
 
   return (
     <article className="kh-card kh-action-card">
@@ -155,6 +177,15 @@ export function ClientActionsCard({ items }: ClientActionsCardProps) {
 }
 
 export function NextMonthPlanCard({ items }: NextMonthPlanCardProps) {
+  if (items.length === 0) {
+    return (
+      <article className="kh-card kh-action-card">
+        <CardTitle kicker="Terv" title="Következő havi terv" />
+        <p className="kh-muted-tight">A következő havi terv még nincs publikálva.</p>
+      </article>
+    );
+  }
+
   return (
     <article className="kh-card kh-action-card">
       <CardTitle kicker="Terv" title="Következő havi terv" />

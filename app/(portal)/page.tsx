@@ -20,7 +20,7 @@ import { getOverviewDataContext } from "@/lib/overview/service";
 
 export default async function PortalHomePage() {
   const currentUser = await requireCurrentUser();
-  const overviewContext = getOverviewDataContext({ currentUser });
+  const overviewContext = await getOverviewDataContext({ currentUser });
   const overview = createOverviewViewModel(overviewContext);
 
   if (overviewContext.projects.length === 0) {

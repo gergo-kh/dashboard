@@ -461,9 +461,11 @@ function createHeader(context: OverviewDataContext): OverviewHeaderViewModel {
 }
 
 export function createOverviewViewModel(context: OverviewDataContext): OverviewViewModel {
+  const monthlyContent = context.monthlyContent;
+
   return {
     header: createHeader(context),
-    monthlySummary: {
+    monthlySummary: monthlyContent?.monthlySummary ?? {
       title: "Havi összefoglaló",
       text:
         "Júliusban 18 optimalizálást végeztünk el. A bevétel 14,6%-kal nőtt, miközben a költség csak 10,3%-kal emelkedett. A fő fókusz a Shopping kampányok és a Merchant feed javítása volt. Augusztusban a konverziós arány növelésére koncentrálunk.",
@@ -473,7 +475,7 @@ export function createOverviewViewModel(context: OverviewDataContext): OverviewV
       lastUpdatedLabel: "Frissítve: 2026. augusztus 2. 08:15",
       approvedByLabel: "Jóváhagyta: KonverzióHuszár"
     },
-    monthlyOutcome: monthlyOutcomeExamples.positive,
+    monthlyOutcome: monthlyContent?.monthlyOutcome ?? monthlyOutcomeExamples.positive,
     kpis,
     metricExplanation: {
       dataSource: "GA4 ecommerce bevétel, Google Ads, Meta Ads és TikTok Ads médiaköltés.",
@@ -486,11 +488,11 @@ export function createOverviewViewModel(context: OverviewDataContext): OverviewV
     },
     performanceChart,
     channelSummary,
-    currentWork,
-    completedOptimizations,
-    clientActions,
-    nextMonthPlan,
-    reports,
+    currentWork: monthlyContent?.currentWork ?? currentWork,
+    completedOptimizations: monthlyContent?.completedOptimizations ?? completedOptimizations,
+    clientActions: monthlyContent?.clientActions ?? clientActions,
+    nextMonthPlan: monthlyContent?.nextMonthPlan ?? nextMonthPlan,
+    reports: monthlyContent?.reports ?? reports,
     attentionProducts
   };
 }
@@ -505,7 +507,7 @@ export function createPortalShellViewModel(context: OverviewDataContext): Portal
     selectedClientName: overview.header.selectedClientName,
     selectedProjectName: overview.header.selectedProjectName,
     ppcManagerName: selectedProject.assignedManager?.full_name ?? "KonverzióHuszár csapat",
-    currentReport: reports.latestReport ?? {
+    currentReport: overview.reports.latestReport ?? {
       id: "missing-report",
       monthLabel: "Júliusi riport",
       createdAtLabel: "nincs adat",

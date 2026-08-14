@@ -4,7 +4,11 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CompletedWorkCard } from "@/components/overview/action-cards";
+import {
+  CompletedWorkCard,
+  NextMonthPlanCard,
+  WorkInProgressCard
+} from "@/components/overview/action-cards";
 import { MetricExplanationSheet } from "@/components/overview/metric-explanation-sheet";
 import { OverviewHeader } from "@/components/overview/overview-header";
 import { PerformanceChart } from "@/components/overview/performance-chart";
@@ -70,14 +74,16 @@ const overview = createOverviewViewModel({
   profileName: "Agency Admin",
   projects,
   role: "agency_admin",
-  selectedProject: projects[0] ?? null
+  selectedProject: projects[0] ?? null,
+  monthlyContent: null
 });
 
 const shell = createPortalShellViewModel({
   profileName: "Agency Admin",
   projects,
   role: "agency_admin",
-  selectedProject: projects[0] ?? null
+  selectedProject: projects[0] ?? null,
+  monthlyContent: null
 });
 
 afterEach(() => cleanup());
@@ -180,5 +186,20 @@ describe("overview interaction hardening", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog", { name: "Elvégzett optimalizálások" })).toBeNull();
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it("renders explicit empty states for missing monthly Supabase content", () => {
+    render(createElement(WorkInProgressCard, { items: [] }));
+    expect(
+      screen.getByText("Most nincs ügyféloldalon megjeleníthető aktuális munka ehhez a projekthez.")
+    ).toBeTruthy();
+
+    cleanup();
+    render(createElement(CompletedWorkCard, { items: [] }));
+    expect(screen.getByText("Ehhez a projekthez még nincs publikált elvégzett optimalizálás.")).toBeTruthy();
+
+    cleanup();
+    render(createElement(NextMonthPlanCard, { items: [] }));
+    expect(screen.getByText("A következő havi terv még nincs publikálva.")).toBeTruthy();
   });
 });
