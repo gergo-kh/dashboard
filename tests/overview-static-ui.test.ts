@@ -20,6 +20,7 @@ function createProject(input: {
   name: string;
   slug: string;
   marketLabel: string;
+  roasTarget?: AccessibleProject["roas_target"];
 }): AccessibleProject {
   return {
     id: input.id,
@@ -30,7 +31,7 @@ function createProject(input: {
     country_code: input.marketLabel,
     market_label: input.marketLabel,
     currency_code: "HUF",
-    roas_target: "4.2",
+    roas_target: input.roasTarget ?? "4.2",
     report_day: 5,
     assigned_manager_profile_id: "manager-1",
     client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" },
@@ -126,6 +127,28 @@ describe("overview static view model", () => {
     expect(selectedOverview.header.selectedClientName).toBe("Demó ügyfél");
     expect(selectedOverview.kpis).toHaveLength(6);
     expect(selectedOverview.attentionProducts[0]?.name).toBe("Demó Flex Pro deréktámasz");
+  });
+
+  it("handles runtime numeric ROAS targets from Supabase without crashing", () => {
+    const numericTargetProject = createProject({
+      id: "project-demo-number-target",
+      name: "Demó HU",
+      slug: "demo-hu-number-target",
+      marketLabel: "HU",
+      roasTarget: 4.2 as unknown as AccessibleProject["roas_target"]
+    });
+
+    const numericTargetOverview = createOverviewViewModel({
+      profileName: "Agency Admin",
+      role: "agency_admin",
+      projects: [numericTargetProject],
+      selectedProject: numericTargetProject,
+      monthlyContent: null,
+      metricsContent: null,
+      merchantContent: null
+    });
+
+    expect(numericTargetOverview.header.roasTarget).toBe("ROAS cél: 4,2");
   });
 
   it("does not render client-specific static copy in the dashboard fixture", () => {

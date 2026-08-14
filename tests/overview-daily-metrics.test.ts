@@ -100,10 +100,11 @@ describe("overview daily metrics read model", () => {
   it("keeps missing data separate from true zero values", () => {
     const emptyContent = createEmptyOverviewMetricsContent({
       projectCurrencyCode: "HUF",
-      roasTarget: "4.2"
+      roasTarget: 4.2
     });
 
     expect(emptyContent.kpis.find((kpi) => kpi.id === "spend")?.currentValue).toBe("nincs adat");
+    expect(emptyContent.kpis.find((kpi) => kpi.id === "roas")?.supportingLabel).toBe("Cél: 4,2");
     expect(emptyContent.performanceChart.state).toBe("empty");
 
     const zeroContent = createOverviewMetricsContent({
@@ -137,7 +138,7 @@ describe("overview daily metrics read model", () => {
     const content = createOverviewMetricsContent({
       period: createMetricPeriods("2026-07-31"),
       projectCurrencyCode: "EUR",
-      roasTarget: "4.2",
+      roasTarget: 4.2,
       current: [
         createRow({
           date: "2026-07-01",
@@ -167,6 +168,7 @@ describe("overview daily metrics read model", () => {
     expect(content.kpis.find((kpi) => kpi.id === "spend")?.currentValue).toBe("1 k EUR");
     expect(content.kpis.find((kpi) => kpi.id === "revenue")?.currentValue).toBe("3 k EUR");
     expect(content.kpis.find((kpi) => kpi.id === "roas")?.currentValue).toBe("3");
+    expect(content.kpis.find((kpi) => kpi.id === "roas")?.supportingLabel).toBe("Cél: 4,2");
   });
 
   it("builds a safe empty state when daily metric rows cannot be normalized", () => {

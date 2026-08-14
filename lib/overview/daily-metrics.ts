@@ -19,6 +19,8 @@ import type {
 
 const paidMediaProviders = ["google_ads", "meta_ads", "tiktok_ads"] as const;
 
+type NullableMetricNumber = string | number | null;
+
 const providerSchema = z.enum([
   "google_ads",
   "meta_ads",
@@ -56,7 +58,7 @@ export type OverviewMetricsRows = Readonly<{
   comparison: DailyMetricContentRow[];
   period: OverviewMetricsPeriod | null;
   projectCurrencyCode: string | null;
-  roasTarget: string | null;
+  roasTarget: NullableMetricNumber;
 }>;
 
 type NormalizedDailyMetricRow = Readonly<{
@@ -154,7 +156,7 @@ export function createMetricPeriods(latestMetricDate: string): OverviewMetricsPe
 
 export function createEmptyOverviewMetricsContent(input: {
   projectCurrencyCode?: string | null;
-  roasTarget?: string | null;
+  roasTarget?: NullableMetricNumber;
 } = {}): OverviewMetricsContent {
   const currencyCode = normalizeCurrencyCode(input.projectCurrencyCode);
   const emptyKpi = (id: string, title: string, tooltip: string, supportingLabel?: string) => ({
@@ -241,7 +243,7 @@ function createKpis(input: {
   currentTotals: PeriodTotals;
   comparisonTotals: PeriodTotals;
   currencyCode: string;
-  roasTarget: string | null;
+  roasTarget: NullableMetricNumber;
   comparisonLabel: string;
 }): KpiCardViewModel[] {
   const spend = createMetricValue(input.currentTotals.spend, input.currentTotals.paidRowsCount > 0);
@@ -415,7 +417,7 @@ function createChannelSummary(
   currentRows: NormalizedDailyMetricRow[],
   totals: PeriodTotals,
   currencyCode: string,
-  roasTarget: string | null
+  roasTarget: NullableMetricNumber
 ): ChannelSummary {
   const target = parseOptionalNumber(roasTarget);
   const rows = providerViews.map((view) => {
@@ -814,12 +816,12 @@ function parseOptionalMetricNumber(value: string | number | null): number | null
   return parsed;
 }
 
-function parseOptionalNumber(value: string | null): number | null {
-  if (!value) {
+function parseOptionalNumber(value: NullableMetricNumber): number | null {
+  if (value === null || value === "") {
     return null;
   }
 
-  const parsed = Number(value);
+  const parsed = typeof value === "number" ? value : Number(value);
 
   return Number.isFinite(parsed) ? parsed : null;
 }
@@ -830,8 +832,10 @@ function normalizeCurrencyCode(currencyCode?: string | null) {
   return normalized && /^[A-Z]{3}$/.test(normalized) ? normalized : "HUF";
 }
 
-function formatRoasTarget(roasTarget: string | null | undefined) {
-  return roasTarget?.replace(".", ",") ?? "4,2";
+function formatRoasTarget(roasTarget: NullableMetricNumber | undefined) {
+  return roasTarget === null || roasTarget === undefined
+    ? "4,2"
+    : String(roasTarget).replace(".", ",");
 }
 
 function formatInteger(value: number) {
