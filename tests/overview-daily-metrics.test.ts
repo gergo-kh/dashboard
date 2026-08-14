@@ -6,7 +6,7 @@ import {
   type DailyMetricContentRow
 } from "@/lib/overview/daily-metrics";
 
-const baseUpdatedAt = "2026-08-01T06:10:00Z";
+const baseUpdatedAt = "2026-08-01T06:10:00.123456+00:00";
 
 function createRow(input: {
   date: string;
@@ -95,6 +95,33 @@ describe("overview daily metrics read model", () => {
     expect(content.performanceChart.state).toBe("normal");
     expect(content.performanceChart.intervals).toHaveLength(3);
     expect(content.channelSummary.totalRow.roasLabel).toBe("6");
+  });
+
+  it("accepts Supabase timestamptz values with explicit UTC offsets", () => {
+    const content = createOverviewMetricsContent({
+      period: createMetricPeriods("2026-07-31"),
+      projectCurrencyCode: "HUF",
+      roasTarget: "4.2",
+      current: [
+        createRow({
+          date: "2026-07-31",
+          provider: "google_ads",
+          spend: "1000",
+          platformConversionValue: "3000"
+        }),
+        createRow({
+          date: "2026-07-31",
+          provider: "ga4",
+          revenue: "4000",
+          purchases: "2"
+        })
+      ],
+      comparison: []
+    });
+
+    expect(content.performanceChart.state).toBe("normal");
+    expect(content.kpis.find((kpi) => kpi.id === "spend")?.currentValue).toBe("1 000 Ft");
+    expect(content.kpis.find((kpi) => kpi.id === "roas")?.currentValue).toBe("4");
   });
 
   it("keeps missing data separate from true zero values", () => {

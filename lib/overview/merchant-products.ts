@@ -9,6 +9,7 @@ const visibleProductStatuses = new Set(["approved", "active", "disapproved", "li
 const visibleIssueStatuses = new Set(["open", "in_progress"]);
 
 const metricNumberSchema = z.union([z.string(), z.number()]).nullable();
+const supabaseTimestampSchema = z.string().datetime({ offset: true });
 
 const merchantProductRowSchema = z.object({
   id: z.string().uuid(),
@@ -17,7 +18,7 @@ const merchantProductRowSchema = z.object({
   title: z.string().trim().min(1),
   gtin: z.string().trim().min(1).nullable(),
   approval_status: z.string().trim().min(1).nullable(),
-  updated_at: z.string().datetime()
+  updated_at: supabaseTimestampSchema
 });
 
 const productDailyMetricRowSchema = z.object({
@@ -37,7 +38,7 @@ const productIssueRowSchema = z.object({
   description: z.string().trim().min(1).nullable(),
   recommendation: z.string().trim().min(1).nullable(),
   status: z.enum(["draft", "open", "in_progress", "resolved", "dismissed", "hidden"]),
-  detected_at: z.string().datetime()
+  detected_at: supabaseTimestampSchema
 });
 
 export type MerchantProductContentRow = Readonly<z.input<typeof merchantProductRowSchema>>;
