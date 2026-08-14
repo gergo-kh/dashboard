@@ -5,6 +5,10 @@ import {
   createMonthlyOverviewContent
 } from "@/lib/overview/monthly-content";
 import {
+  createEmptyOverviewMetricsContent,
+  createOverviewMetricsContent
+} from "@/lib/overview/daily-metrics";
+import {
   createOverviewRepository,
   type OverviewRepository
 } from "@/lib/overview/repository";
@@ -31,19 +35,32 @@ export async function getOverviewDataContext({
     projects,
     requestedProjectId
   });
-  const monthlyContent = selectedProject
-    ? await repository
-        .getMonthlyOverviewContentRows(selectedProject.id)
-        .then((rows) => createMonthlyOverviewContent(rows))
-        .catch(() => createEmptyMonthlyOverviewContent())
-    : createEmptyMonthlyOverviewContent();
+  const [monthlyContent, metricsContent] = selectedProject
+    ? await Promise.all([
+        repository
+          .getMonthlyOverviewContentRows(selectedProject.id)
+          .then((rows) => createMonthlyOverviewContent(rows))
+          .catch(() => createEmptyMonthlyOverviewContent()),
+        repository
+          .getOverviewMetricsRows(selectedProject)
+          .then((rows) => createOverviewMetricsContent(rows))
+          .catch(() => createEmptyOverviewMetricsContent({
+            projectCurrencyCode: selectedProject.currency_code,
+            roasTarget: selectedProject.roas_target
+          }))
+      ])
+    : [
+        createEmptyMonthlyOverviewContent(),
+        createEmptyOverviewMetricsContent()
+      ];
 
   return {
     profileName: currentUser.profile.full_name,
     role: currentUser.profile.role,
     projects,
     selectedProject,
-    monthlyContent
+    monthlyContent,
+    metricsContent
   };
 }
 
