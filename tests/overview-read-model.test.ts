@@ -153,6 +153,7 @@ describe("overview read model foundation", () => {
 
   it("loads monthly overview rows for the selected accessible project", async () => {
     const requestedProjectIds: string[] = [];
+    const metricProjectIds: string[] = [];
     const baseRepository = createOverviewRepository();
     const repository: OverviewRepository = {
       ...baseRepository,
@@ -184,6 +185,17 @@ describe("overview read model foundation", () => {
           optimizationItems: [],
           clientActionItems: []
         };
+      },
+      async getOverviewMetricsRows(project) {
+        metricProjectIds.push(project.id);
+
+        return {
+          current: [],
+          comparison: [],
+          period: null,
+          projectCurrencyCode: project.currency_code,
+          roasTarget: project.roas_target
+        };
       }
     };
 
@@ -194,7 +206,9 @@ describe("overview read model foundation", () => {
     });
 
     expect(requestedProjectIds).toEqual(["project-2"]);
+    expect(metricProjectIds).toEqual(["project-2"]);
     expect(context.monthlyContent?.monthlySummary.text).toBe("Jóváhagyott havi szöveg.");
+    expect(context.metricsContent?.performanceChart.state).toBe("empty");
   });
 
   it("returns safe monthly empty state when selected project content cannot load", async () => {
@@ -214,5 +228,26 @@ describe("overview read model foundation", () => {
     expect(context.selectedProject?.id).toBe("project-1");
     expect(context.monthlyContent?.monthlySummary.status).toBe("draft");
     expect(context.monthlyContent?.currentWork).toEqual([]);
+  });
+
+  it("returns safe daily metric empty state when selected project metrics cannot load", async () => {
+    const baseRepository = createOverviewRepository();
+    const repository: OverviewRepository = {
+      ...baseRepository,
+      async getOverviewMetricsRows() {
+        throw new Error("Simulated metrics failure");
+      }
+    };
+
+    const context = await getOverviewDataContext({
+      currentUser: createCurrentUser(agencyProfile),
+      repository
+    });
+
+    expect(context.selectedProject?.id).toBe("project-1");
+    expect(context.metricsContent?.performanceChart.state).toBe("empty");
+    expect(context.metricsContent?.kpis.every((kpi) => kpi.currentValue === "nincs adat")).toBe(
+      true
+    );
   });
 });

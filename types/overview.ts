@@ -199,6 +199,16 @@ export type MetricExplanation = {
   lastRefresh: string;
 };
 
+export type OverviewMetricsContent = Readonly<{
+  dateRangeLabel: string;
+  comparisonRangeLabel: string;
+  lastRefreshLabel: string;
+  kpis: KpiCardViewModel[];
+  metricExplanation: MetricExplanation;
+  performanceChart: PerformanceChartViewModel;
+  channelSummary: ChannelSummary;
+}>;
+
 export type PortalShellViewModel = {
   userName: string;
   roleLabel: string;
@@ -231,4 +241,5 @@ export type OverviewDataContext = {
   projects: AccessibleProject[];
   selectedProject: AccessibleProject | null;
   monthlyContent: MonthlyOverviewContent | null;
+  metricsContent: OverviewMetricsContent | null;
 };

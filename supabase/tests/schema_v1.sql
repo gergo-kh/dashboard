@@ -128,6 +128,24 @@ select ok(
     join pg_namespace n
       on n.oid = c.relnamespace
     where n.nspname = 'public'
+      and c.relname = any (array[
+        'profiles',
+        'clients',
+        'projects',
+        'project_modules',
+        'integrations',
+        'integration_accounts',
+        'daily_metrics',
+        'monthly_snapshots',
+        'monthly_reviews',
+        'optimization_items',
+        'client_action_items',
+        'merchant_products',
+        'product_daily_metrics',
+        'product_issues',
+        'reports',
+        'sync_runs'
+      ])
       and p.proname = 'set_updated_at'
       and not t.tgisinternal
   ) = 16,

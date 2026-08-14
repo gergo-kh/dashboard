@@ -1,19 +1,53 @@
 export function formatForint(value: number) {
+  return formatCurrency(value, "HUF");
+}
+
+export function formatCurrency(value: number, currencyCode = "HUF") {
+  if (currencyCode === "HUF") {
+    return `${formatGroupedInteger(value)} Ft`;
+  }
+
   return new Intl.NumberFormat("hu-HU", {
     maximumFractionDigits: 0,
     style: "currency",
-    currency: "HUF"
+    currency: currencyCode
   }).format(value);
 }
 
 export function formatCompactForint(value: number) {
+  return formatCompactCurrency(value, "HUF");
+}
+
+export function formatCompactCurrency(value: number, currencyCode = "HUF") {
   if (Math.abs(value) >= 1_000_000) {
-    return `${new Intl.NumberFormat("hu-HU", {
+    const compactValue = new Intl.NumberFormat("hu-HU", {
       maximumFractionDigits: 1
-    }).format(value / 1_000_000)} M Ft`;
+    }).format(value / 1_000_000);
+
+    if (currencyCode === "HUF") {
+      return `${compactValue} M Ft`;
+    }
+
+    return `${compactValue} M ${currencyCode}`;
   }
 
-  return formatForint(value);
+  if (currencyCode === "HUF") {
+    return formatForint(value);
+  }
+
+  if (Math.abs(value) >= 1_000) {
+    return `${new Intl.NumberFormat("hu-HU", {
+      maximumFractionDigits: 1
+    }).format(value / 1_000)} k ${currencyCode}`;
+  }
+
+  return formatCurrency(value, currencyCode);
+}
+
+function formatGroupedInteger(value: number) {
+  return Math.round(value)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
 export function formatPercent(value: number) {

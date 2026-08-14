@@ -5,6 +5,11 @@ import type {
   UserProfile
 } from "@/lib/auth/session";
 import { filterAccessibleProjectsForProfile } from "@/lib/auth/session";
+import {
+  createMetricPeriods,
+  type DailyMetricContentRow,
+  type OverviewMetricsRows
+} from "@/lib/overview/daily-metrics";
 import type {
   ClientActionContentRow,
   MonthlyOverviewContentRows,
@@ -27,6 +32,7 @@ export type OverviewRepository = {
     requestedProjectId?: string;
   }): OverviewProjectContext | null;
   getMonthlyOverviewContentRows(projectId: string): Promise<MonthlyOverviewContentRows>;
+  getOverviewMetricsRows(project: OverviewProjectContext): Promise<OverviewMetricsRows>;
 };
 
 export function createOverviewRepository(
@@ -60,7 +66,25 @@ export function createOverviewRepository(
       }
 
       return getMonthlyOverviewContentRows(supabase, projectId);
+    },
+
+    async getOverviewMetricsRows(project) {
+      if (!supabase) {
+        return createEmptyOverviewMetricsRows(project);
+      }
+
+      return getOverviewMetricsRows(supabase, project);
     }
+  };
+}
+
+function createEmptyOverviewMetricsRows(project: OverviewProjectContext): OverviewMetricsRows {
+  return {
+    current: [],
+    comparison: [],
+    period: null,
+    projectCurrencyCode: project.currency_code,
+    roasTarget: project.roas_target
   };
 }
 
@@ -166,6 +190,73 @@ async function getClientActionItems(
 
   if (error) {
     throw new Error("Could not load monthly overview client action items.");
+  }
+
+  return data;
+}
+
+async function getOverviewMetricsRows(
+  supabase: SupabaseClient<Database>,
+  project: OverviewProjectContext
+): Promise<OverviewMetricsRows> {
+  const latestDate = await getLatestDailyMetricDate(supabase, project.id);
+
+  if (!latestDate) {
+    return createEmptyOverviewMetricsRows(project);
+  }
+
+  const period = createMetricPeriods(latestDate);
+  const rows = await getDailyMetricRows(supabase, project.id, period.comparisonStart, period.currentEnd);
+
+  return {
+    current: rows.filter((row) => row.metric_date >= period.currentStart),
+    comparison: rows.filter(
+      (row) => row.metric_date >= period.comparisonStart && row.metric_date <= period.comparisonEnd
+    ),
+    period,
+    projectCurrencyCode: project.currency_code,
+    roasTarget: project.roas_target
+  };
+}
+
+async function getLatestDailyMetricDate(
+  supabase: SupabaseClient<Database>,
+  projectId: string
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("daily_metrics")
+    .select("metric_date")
+    .eq("project_id", projectId)
+    .order("metric_date", { ascending: false })
+    .limit(1)
+    .returns<Array<{ metric_date: string }>>();
+
+  if (error) {
+    throw new Error("Could not load latest daily metric date.");
+  }
+
+  return data[0]?.metric_date ?? null;
+}
+
+async function getDailyMetricRows(
+  supabase: SupabaseClient<Database>,
+  projectId: string,
+  startDate: string,
+  endDate: string
+): Promise<DailyMetricContentRow[]> {
+  const { data, error } = await supabase
+    .from("daily_metrics")
+    .select(
+      "metric_date, provider, spend, revenue, purchases, platform_conversion_value, platform_conversions, currency_code, updated_at"
+    )
+    .eq("project_id", projectId)
+    .gte("metric_date", startDate)
+    .lte("metric_date", endDate)
+    .order("metric_date", { ascending: true })
+    .returns<DailyMetricContentRow[]>();
+
+  if (error) {
+    throw new Error("Could not load daily metric rows.");
   }
 
   return data;

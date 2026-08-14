@@ -432,10 +432,12 @@ function createHeader(context: OverviewDataContext): OverviewHeaderViewModel {
   const selector = createProjectSelectorItems(context.projects, context.selectedProject);
   const selected = selector.find((project) => project.isSelected) ?? selector[0];
   const selectedProject = getSelectedProject(context);
+  const metricsContent = context.metricsContent;
+  const dateRangeLabel = metricsContent?.dateRangeLabel ?? "Július";
 
   return {
     title: "Marketing áttekintés",
-    subtitle: "A kiválasztott projekt júliusi teljesítménye és a KonverzióHuszár aktuális munkája.",
+    subtitle: `A kiválasztott projekt ${dateRangeLabel.toLowerCase()} teljesítménye és a KonverzióHuszár aktuális munkája.`,
     projectSelector: selector,
     selectedProjectName: selected?.name ?? "Nincs elérhető projekt",
     selectedClientName: selected?.clientName ?? "Nincs kiválasztott ügyfél",
@@ -446,22 +448,23 @@ function createHeader(context: OverviewDataContext): OverviewHeaderViewModel {
       state: "active"
     },
     dateRanges: [
-      { value: "this_month", label: "Július", isSelected: true },
+      { value: "this_month", label: dateRangeLabel, isSelected: true },
       { value: "last_30_days", label: "Elmúlt 30 nap", isSelected: false },
       { value: "quarter", label: "Negyedév", isSelected: false }
     ],
     comparisons: [
-      { value: "previous_period", label: "Előző időszak", isSelected: true },
+      { value: "previous_period", label: metricsContent?.comparisonRangeLabel ?? "Előző időszak", isSelected: true },
       { value: "previous_month", label: "Előző hónap", isSelected: false },
       { value: "previous_year", label: "Előző év", isSelected: false }
     ],
     roasTarget: `ROAS cél: ${formatProjectRoasTarget(selectedProject.roas_target)}`,
-    lastRefreshLabel: "Utolsó adatfrissítés: ma 06:10"
+    lastRefreshLabel: metricsContent?.lastRefreshLabel ?? "Utolsó adatfrissítés: ma 06:10"
   };
 }
 
 export function createOverviewViewModel(context: OverviewDataContext): OverviewViewModel {
   const monthlyContent = context.monthlyContent;
+  const metricsContent = context.metricsContent;
 
   return {
     header: createHeader(context),
@@ -476,8 +479,8 @@ export function createOverviewViewModel(context: OverviewDataContext): OverviewV
       approvedByLabel: "Jóváhagyta: KonverzióHuszár"
     },
     monthlyOutcome: monthlyContent?.monthlyOutcome ?? monthlyOutcomeExamples.positive,
-    kpis,
-    metricExplanation: {
+    kpis: metricsContent?.kpis ?? kpis,
+    metricExplanation: metricsContent?.metricExplanation ?? {
       dataSource: "GA4 ecommerce bevétel, Google Ads, Meta Ads és TikTok Ads médiaköltés.",
       formula: "Blended ROAS = GA4 ecommerce bevétel / teljes paid-media költés.",
       platformDifference:
@@ -486,8 +489,8 @@ export function createOverviewViewModel(context: OverviewDataContext): OverviewV
         "A cookie, consent és cross-device hatások miatt a riport üzleti iránytű, nem könyvelési kimutatás.",
       lastRefresh: "Utolsó adatfrissítés: ma 06:10"
     },
-    performanceChart,
-    channelSummary,
+    performanceChart: metricsContent?.performanceChart ?? performanceChart,
+    channelSummary: metricsContent?.channelSummary ?? channelSummary,
     currentWork: monthlyContent?.currentWork ?? currentWork,
     completedOptimizations: monthlyContent?.completedOptimizations ?? completedOptimizations,
     clientActions: monthlyContent?.clientActions ?? clientActions,
