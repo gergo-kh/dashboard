@@ -57,6 +57,7 @@ function createProject(input: {
     country_code: "HU",
     market_label: "HU",
     currency_code: "HUF",
+    timezone: "Europe/Budapest",
     roas_target: "4.2",
     report_day: 5,
     assigned_manager_profile_id: "user-1",

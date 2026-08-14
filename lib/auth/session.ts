@@ -15,6 +15,7 @@ export type AccessibleProject = Pick<
   | "country_code"
   | "market_label"
   | "currency_code"
+  | "timezone"
   | "roas_target"
   | "report_day"
   | "assigned_manager_profile_id"
@@ -116,6 +117,7 @@ type ProjectQueryRow = Pick<
   | "country_code"
   | "market_label"
   | "currency_code"
+  | "timezone"
   | "roas_target"
   | "report_day"
   | "assigned_manager_profile_id"
@@ -143,6 +145,7 @@ function toAccessibleProject(project: ProjectQueryRow): AccessibleProject {
     country_code: project.country_code,
     market_label: project.market_label,
     currency_code: project.currency_code,
+    timezone: project.timezone,
     roas_target: normalizeNullableDecimalString(project.roas_target),
     report_day: project.report_day,
     assigned_manager_profile_id: project.assigned_manager_profile_id,
@@ -176,7 +179,7 @@ export async function getAccessibleProjects(profile: UserProfile) {
   const projectQuery = supabase
     .from("projects")
     .select(
-      "id, client_id, name, slug, status, country_code, market_label, currency_code, roas_target, report_day, assigned_manager_profile_id, clients(id, name, slug), assigned_manager:profiles!projects_assigned_manager_profile_id_fkey(id, full_name, email, avatar_url)"
+      "id, client_id, name, slug, status, country_code, market_label, currency_code, timezone, roas_target, report_day, assigned_manager_profile_id, clients(id, name, slug), assigned_manager:profiles!projects_assigned_manager_profile_id_fkey(id, full_name, email, avatar_url)"
     );
 
   const scopedQuery = (() => {

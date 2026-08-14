@@ -8,6 +8,7 @@ import {
 import { AttentionProducts } from "@/components/overview/attention-products";
 import { ChannelSummary } from "@/components/overview/channel-summary";
 import { KpiGrid } from "@/components/overview/kpi-card";
+import { MonthlyReviewEditor } from "@/components/monthly-communication/monthly-review-editor";
 import { MetricExplanationSheet } from "@/components/overview/metric-explanation-sheet";
 import { MonthlyOutcomeCard } from "@/components/overview/monthly-outcome-card";
 import { MonthlySummaryCard } from "@/components/overview/monthly-summary-card";
@@ -15,6 +16,11 @@ import { OverviewHeader } from "@/components/overview/overview-header";
 import { PerformanceChart } from "@/components/overview/performance-chart";
 import { ReportsCard } from "@/components/overview/reports-card";
 import { EmptyState } from "@/components/ui/state";
+import {
+  saveMonthlyReviewDraftAction,
+  submitMonthlyReviewDraftAction
+} from "@/app/(portal)/monthly-review-actions";
+import { createMonthlyReviewEditorViewModel } from "@/lib/monthly-communication/editor-view-model";
 import { createOverviewViewModel } from "@/lib/overview/static-data";
 import { getOverviewDataContext } from "@/lib/overview/service";
 
@@ -22,6 +28,10 @@ export default async function PortalHomePage() {
   const currentUser = await requireCurrentUser();
   const overviewContext = await getOverviewDataContext({ currentUser });
   const overview = createOverviewViewModel(overviewContext);
+  const monthlyReviewEditor = createMonthlyReviewEditorViewModel({
+    currentUser,
+    selectedProject: overviewContext.selectedProject
+  });
 
   if (overviewContext.projects.length === 0) {
     return (
@@ -63,6 +73,14 @@ export default async function PortalHomePage() {
         <ReportsCard reports={overview.reports} />
         <AttentionProducts products={overview.attentionProducts} />
       </div>
+
+      {monthlyReviewEditor ? (
+        <MonthlyReviewEditor
+          editor={monthlyReviewEditor}
+          saveAction={saveMonthlyReviewDraftAction}
+          submitAction={submitMonthlyReviewDraftAction}
+        />
+      ) : null}
     </div>
   );
 }

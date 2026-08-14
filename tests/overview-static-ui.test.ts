@@ -31,6 +31,7 @@ function createProject(input: {
     country_code: input.marketLabel,
     market_label: input.marketLabel,
     currency_code: "HUF",
+    timezone: "Europe/Budapest",
     roas_target: input.roasTarget ?? "4.2",
     report_day: 5,
     assigned_manager_profile_id: "manager-1",
