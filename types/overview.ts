@@ -1,4 +1,5 @@
 import type { AccessibleProject } from "@/lib/auth/session";
+import type { MonthlyOverviewContent } from "@/lib/overview/monthly-content";
 
 export type SemanticState = "positive" | "neutral" | "negative";
 export type MonthlyOutcomeVariant = "positive" | "mixed" | "weak";
@@ -229,4 +230,5 @@ export type OverviewDataContext = {
   role: "agency_admin" | "client_user";
   projects: AccessibleProject[];
   selectedProject: AccessibleProject | null;
+  monthlyContent: MonthlyOverviewContent | null;
 };

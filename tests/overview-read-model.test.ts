@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import type { AccessibleProject, CurrentUser, UserProfile } from "@/lib/auth/session";
-import { createOverviewRepository } from "@/lib/overview/repository";
+import {
+  createOverviewRepository,
+  type OverviewRepository
+} from "@/lib/overview/repository";
 import { getOverviewDataContext } from "@/lib/overview/service";
 
 const authUser = {
@@ -91,40 +94,46 @@ function createCurrentUser(profile: UserProfile, scopedProjects = projects): Cur
 }
 
 describe("overview read model foundation", () => {
-  it("keeps agency admins scoped to every accessible project", () => {
-    const context = getOverviewDataContext({
-      currentUser: createCurrentUser(agencyProfile)
+  it("keeps agency admins scoped to every accessible project", async () => {
+    const context = await getOverviewDataContext({
+      currentUser: createCurrentUser(agencyProfile),
+      repository: createOverviewRepository()
     });
 
     expect(context.projects.map((project) => project.id)).toEqual(["project-1", "project-2"]);
     expect(context.selectedProject?.id).toBe("project-1");
+    expect(context.monthlyContent?.reports.history).toEqual([]);
   });
 
-  it("keeps client users scoped to their own client projects", () => {
-    const context = getOverviewDataContext({
-      currentUser: createCurrentUser(clientProfile)
+  it("keeps client users scoped to their own client projects", async () => {
+    const context = await getOverviewDataContext({
+      currentUser: createCurrentUser(clientProfile),
+      repository: createOverviewRepository()
     });
 
     expect(context.projects.map((project) => project.id)).toEqual(["project-1"]);
     expect(context.selectedProject?.client_id).toBe("client-1");
   });
 
-  it("selects a requested accessible project", () => {
-    const context = getOverviewDataContext({
+  it("selects a requested accessible project", async () => {
+    const context = await getOverviewDataContext({
       currentUser: createCurrentUser(agencyProfile),
-      requestedProjectId: "project-2"
+      requestedProjectId: "project-2",
+      repository: createOverviewRepository()
     });
 
     expect(context.selectedProject?.id).toBe("project-2");
   });
 
-  it("falls back safely when no projects are accessible", () => {
-    const context = getOverviewDataContext({
-      currentUser: createCurrentUser(clientProfile, [])
+  it("falls back safely when no projects are accessible", async () => {
+    const context = await getOverviewDataContext({
+      currentUser: createCurrentUser(clientProfile, []),
+      repository: createOverviewRepository()
     });
 
     expect(context.projects).toEqual([]);
     expect(context.selectedProject).toBeNull();
+    expect(context.monthlyContent?.monthlySummary.status).toBe("draft");
   });
 
   it("keeps repository selection inside the accessible project list", () => {
@@ -140,5 +149,70 @@ describe("overview read model foundation", () => {
         requestedProjectId: "project-2"
       })?.id
     ).toBe("project-1");
+  });
+
+  it("loads monthly overview rows for the selected accessible project", async () => {
+    const requestedProjectIds: string[] = [];
+    const baseRepository = createOverviewRepository();
+    const repository: OverviewRepository = {
+      ...baseRepository,
+      async getMonthlyOverviewContentRows(projectId) {
+        requestedProjectIds.push(projectId);
+
+        return {
+          monthlyReview: {
+            id: "review-1",
+            period_start: "2026-07-01",
+            period_end: "2026-07-31",
+            summary_approved: "Jóváhagyott havi szöveg.",
+            outcome_type: "positive",
+            outcome_items: [
+              {
+                label: "ROAS",
+                value: "+9%",
+                state: "positive"
+              }
+            ],
+            corrective_actions: [],
+            next_month_plan: [],
+            status: "approved",
+            approved_at: "2026-08-02T08:15:00Z",
+            updated_at: "2026-08-02T08:15:00Z",
+            approved_by_profile: null
+          },
+          reports: [],
+          optimizationItems: [],
+          clientActionItems: []
+        };
+      }
+    };
+
+    const context = await getOverviewDataContext({
+      currentUser: createCurrentUser(agencyProfile),
+      requestedProjectId: "project-2",
+      repository
+    });
+
+    expect(requestedProjectIds).toEqual(["project-2"]);
+    expect(context.monthlyContent?.monthlySummary.text).toBe("Jóváhagyott havi szöveg.");
+  });
+
+  it("returns safe monthly empty state when selected project content cannot load", async () => {
+    const baseRepository = createOverviewRepository();
+    const repository: OverviewRepository = {
+      ...baseRepository,
+      async getMonthlyOverviewContentRows() {
+        throw new Error("Simulated repository failure");
+      }
+    };
+
+    const context = await getOverviewDataContext({
+      currentUser: createCurrentUser(agencyProfile),
+      repository
+    });
+
+    expect(context.selectedProject?.id).toBe("project-1");
+    expect(context.monthlyContent?.monthlySummary.status).toBe("draft");
+    expect(context.monthlyContent?.currentWork).toEqual([]);
   });
 });

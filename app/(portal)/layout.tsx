@@ -10,7 +10,8 @@ type PortalLayoutProps = Readonly<{
 
 export default async function PortalLayout({ children }: PortalLayoutProps) {
   const currentUser = await requireCurrentUser();
-  const shell = createPortalShellViewModel(getOverviewDataContext({ currentUser }));
+  const overviewContext = await getOverviewDataContext({ currentUser });
+  const shell = createPortalShellViewModel(overviewContext);
 
   return (
     <main className="kh-portal-shell">
