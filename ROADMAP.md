@@ -116,6 +116,14 @@ Review gate:
 - KPI formulas must match the master specification.
 - Missing data must never be displayed as real zero data.
 
+Status:
+
+- Completed and merged into `main`.
+- Phase 6 established the server-side dashboard read path while preserving the approved Phase 4 UI.
+- The overview now uses Supabase-backed project context, approved monthly content, daily metrics for KPI/chart/channel calculations, merchant attention products, and deterministic staging read fixtures.
+- Windsor.ai live ingestion remains separate from the dashboard read path and is not part of the completed Phase 6 scope.
+- See `docs/dashboard-read-path-v1.md` for the source-table mapping, KPI formulas, RLS expectations, staging smoke result, and remaining validation gates.
+
 ## Phase 7: Monthly Communication
 
 Deliverables:
