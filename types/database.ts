@@ -14,6 +14,18 @@ export type IntegrationProvider =
   | "ga4"
   | "merchant_center"
   | "tiktok_ads";
+export type MonthlyOutcomeType = "positive" | "mixed" | "focus";
+export type MonthlyReviewStatus = "draft" | "review" | "approved" | "published" | "archived";
+export type OptimizationStatus = "planned" | "in_progress" | "completed" | "cancelled";
+export type ApprovalStatus = "draft" | "approved" | "hidden";
+export type ClientActionPriority = "urgent" | "recommended" | "opportunity";
+export type ClientActionStatus =
+  | "draft"
+  | "open"
+  | "in_progress"
+  | "resolved"
+  | "dismissed"
+  | "hidden";
 export type DailyMetricProvider =
   | "google_ads"
   | "meta_ads"
@@ -326,9 +338,159 @@ export type Database = {
       };
       project_modules: GenericTable<{ project_id: string } & TimestampColumns>;
       monthly_snapshots: GenericTable<{ id: string; project_id: string } & TimestampColumns>;
-      monthly_reviews: GenericTable<{ id: string; project_id: string } & TimestampColumns>;
-      optimization_items: GenericTable<{ id: string; project_id: string } & TimestampColumns>;
-      client_action_items: GenericTable<{ id: string; project_id: string } & TimestampColumns>;
+      monthly_reviews: {
+        Row: {
+          id: string;
+          project_id: string;
+          period_start: string;
+          period_end: string;
+          summary_draft: string | null;
+          summary_approved: string | null;
+          outcome_type: MonthlyOutcomeType;
+          outcome_items: Json[];
+          corrective_actions: Json[];
+          next_month_plan: Json[];
+          status: MonthlyReviewStatus;
+          approved_by: string | null;
+          approved_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          period_start: string;
+          period_end: string;
+          summary_draft?: string | null;
+          summary_approved?: string | null;
+          outcome_type?: MonthlyOutcomeType;
+          outcome_items?: Json[];
+          corrective_actions?: Json[];
+          next_month_plan?: Json[];
+          status?: MonthlyReviewStatus;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          project_id?: string;
+          period_start?: string;
+          period_end?: string;
+          summary_draft?: string | null;
+          summary_approved?: string | null;
+          outcome_type?: MonthlyOutcomeType;
+          outcome_items?: Json[];
+          corrective_actions?: Json[];
+          next_month_plan?: Json[];
+          status?: MonthlyReviewStatus;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      optimization_items: {
+        Row: {
+          id: string;
+          project_id: string;
+          category: string;
+          title: string;
+          description: string | null;
+          status: OptimizationStatus;
+          source: string;
+          source_reference: string | null;
+          source_timestamp: string | null;
+          started_at: string | null;
+          completed_at: string | null;
+          is_client_visible: boolean;
+          approval_status: ApprovalStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          category: string;
+          title: string;
+          description?: string | null;
+          status?: OptimizationStatus;
+          source?: string;
+          source_reference?: string | null;
+          source_timestamp?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
+          is_client_visible?: boolean;
+          approval_status?: ApprovalStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          project_id?: string;
+          category?: string;
+          title?: string;
+          description?: string | null;
+          status?: OptimizationStatus;
+          source?: string;
+          source_reference?: string | null;
+          source_timestamp?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
+          is_client_visible?: boolean;
+          approval_status?: ApprovalStatus;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      client_action_items: {
+        Row: {
+          id: string;
+          project_id: string;
+          source: string;
+          category: string;
+          title: string;
+          description: string | null;
+          priority: ClientActionPriority;
+          affected_count: number | null;
+          external_url: string | null;
+          status: ClientActionStatus;
+          due_date: string | null;
+          created_at: string;
+          updated_at: string;
+          resolved_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          source?: string;
+          category: string;
+          title: string;
+          description?: string | null;
+          priority?: ClientActionPriority;
+          affected_count?: number | null;
+          external_url?: string | null;
+          status?: ClientActionStatus;
+          due_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          resolved_at?: string | null;
+        };
+        Update: {
+          project_id?: string;
+          source?: string;
+          category?: string;
+          title?: string;
+          description?: string | null;
+          priority?: ClientActionPriority;
+          affected_count?: number | null;
+          external_url?: string | null;
+          status?: ClientActionStatus;
+          due_date?: string | null;
+          updated_at?: string;
+          resolved_at?: string | null;
+        };
+        Relationships: [];
+      };
       merchant_products: GenericTable<{ id: string; project_id: string } & TimestampColumns>;
       product_daily_metrics: GenericTable<{ id: string; project_id: string } & TimestampColumns>;
       product_issues: GenericTable<{ id: string; project_id: string } & TimestampColumns>;
@@ -338,6 +500,11 @@ export type Database = {
     Functions: Record<string, never>;
     Enums: {
       profile_role: ProfileRole;
+      monthly_outcome_type: MonthlyOutcomeType;
+      optimization_status: OptimizationStatus;
+      approval_status: ApprovalStatus;
+      client_action_priority: ClientActionPriority;
+      client_action_status: ClientActionStatus;
       sync_status: SyncStatus;
     };
     CompositeTypes: Record<string, never>;
