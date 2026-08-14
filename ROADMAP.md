@@ -140,6 +140,14 @@ Review gate:
 - Client-visible monthly content must be approved.
 - Weak months must include corrective actions.
 
+Status:
+
+- Completed and merged into `main`.
+- Phase 7 added the agency-only monthly communication editor, approval and publishing workflow, monthly work management, client action management, and deterministic staging monthly communication fixtures.
+- Client users continue to read only approved, published, or explicitly visible content through server-side authorization and PostgreSQL RLS.
+- The staging monthly communication fixture was applied to `kh-dashboard-staging` and verified with agency/client smoke coverage and client-user RLS checks.
+- See `docs/monthly-communication-workflow-v1.md` for workflow rules, permissions, state transitions, fixture details, staging validation, and known follow-up gates.
+
 ## Phase 8: Merchant Center
 
 Deliverables:
