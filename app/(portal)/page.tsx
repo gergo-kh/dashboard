@@ -9,6 +9,7 @@ import { AttentionProducts } from "@/components/overview/attention-products";
 import { ChannelSummary } from "@/components/overview/channel-summary";
 import { KpiGrid } from "@/components/overview/kpi-card";
 import { MonthlyReviewEditor } from "@/components/monthly-communication/monthly-review-editor";
+import { MonthlyWorkManagement } from "@/components/monthly-communication/monthly-work-management";
 import { MetricExplanationSheet } from "@/components/overview/metric-explanation-sheet";
 import { MonthlyOutcomeCard } from "@/components/overview/monthly-outcome-card";
 import { MonthlySummaryCard } from "@/components/overview/monthly-summary-card";
@@ -20,11 +21,14 @@ import {
   saveMonthlyReviewDraftAction,
   submitMonthlyReviewDraftAction,
   approveMonthlyReviewAction,
-  publishMonthlyReviewAction
+  publishMonthlyReviewAction,
+  saveOptimizationItemAction,
+  saveClientActionItemAction
 } from "@/app/(portal)/monthly-review-actions";
 import { MonthlyApprovalWorkflow } from "@/components/monthly-communication/monthly-approval-workflow";
 import { createMonthlyReviewEditorViewModel } from "@/lib/monthly-communication/editor-view-model";
 import { getMonthlyReviewApprovalWorkflowViewModel } from "@/lib/monthly-communication/approval-workflow";
+import { getMonthlyWorkManagementViewModel } from "@/lib/monthly-communication/work-management-view-model";
 import { createOverviewViewModel } from "@/lib/overview/static-data";
 import { getOverviewDataContext } from "@/lib/overview/service";
 
@@ -39,6 +43,10 @@ export default async function PortalHomePage() {
   const monthlyReviewApprovalWorkflow = await getMonthlyReviewApprovalWorkflowViewModel({
     currentUser,
     editor: monthlyReviewEditor
+  });
+  const monthlyWorkManagement = await getMonthlyWorkManagementViewModel({
+    currentUser,
+    selectedProject: overviewContext.selectedProject
   });
 
   if (overviewContext.projects.length === 0) {
@@ -94,6 +102,13 @@ export default async function PortalHomePage() {
               workflow={monthlyReviewApprovalWorkflow}
               approveAction={approveMonthlyReviewAction}
               publishAction={publishMonthlyReviewAction}
+            />
+          ) : null}
+          {monthlyWorkManagement ? (
+            <MonthlyWorkManagement
+              management={monthlyWorkManagement}
+              saveOptimizationAction={saveOptimizationItemAction}
+              saveClientActionAction={saveClientActionItemAction}
             />
           ) : null}
         </div>
