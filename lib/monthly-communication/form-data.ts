@@ -1,4 +1,8 @@
-import type { MonthlyReviewDraftInput } from "@/lib/monthly-communication/schemas";
+import type {
+  MonthlyReviewApprovalInput,
+  MonthlyReviewDraftInput,
+  MonthlyReviewTransitionInput
+} from "@/lib/monthly-communication/schemas";
 
 export function monthlyReviewDraftFromFormData(formData: FormData): MonthlyReviewDraftInput {
   const outcomeItems = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -33,6 +37,24 @@ export function monthlyReviewDraftFromFormData(formData: FormData): MonthlyRevie
     outcomeItems,
     correctiveActions,
     nextMonthPlan
+  };
+}
+
+export function monthlyReviewApprovalFromFormData(
+  formData: FormData
+): MonthlyReviewApprovalInput {
+  return {
+    reviewId: readText(formData, "reviewId"),
+    approvedSummary: readText(formData, "approvedSummary"),
+    publishImmediately: false
+  };
+}
+
+export function monthlyReviewTransitionFromFormData(
+  formData: FormData
+): MonthlyReviewTransitionInput {
+  return {
+    reviewId: readText(formData, "reviewId")
   };
 }
 

@@ -124,6 +124,8 @@ export async function publishMonthlyReview({
     );
   }
 
+  assertStoredMonthlyReviewContent(review);
+
   return repository.updateMonthlyReviewStatus({
     id: review.id,
     status: "published"

@@ -318,6 +318,50 @@ describe("monthly communication service foundation", () => {
     });
   });
 
+  it("approves without publishing and records mandatory approval metadata", async () => {
+    const { repository, state } = createRepository(
+      createReview({
+        status: "review"
+      })
+    );
+
+    const updatedReview = await approveMonthlyReview({
+      currentUser: agencyUser,
+      repository,
+      approval: {
+        reviewId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        approvedSummary: "Jóváhagyott, még nem publikált összefoglaló."
+      },
+      now: () => new Date("2026-08-04T10:15:00Z")
+    });
+
+    expect(updatedReview.status).toBe("approved");
+    expect(state.statusUpdates[0]).toMatchObject({
+      status: "approved",
+      summary_approved: "Jóváhagyott, még nem publikált összefoglaló.",
+      approved_by: agencyProfile.id,
+      approved_at: "2026-08-04T10:15:00.000Z"
+    });
+  });
+
+  it("rejects client users before approving monthly content", async () => {
+    const { repository, state } = createRepository(createReview({ status: "review" }));
+
+    await expect(
+      approveMonthlyReview({
+        currentUser: clientUser,
+        repository,
+        approval: {
+          reviewId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          approvedSummary: "Jóváhagyott havi összefoglaló."
+        }
+      })
+    ).rejects.toMatchObject({
+      code: "permission_denied"
+    });
+    expect(state.statusUpdates).toHaveLength(0);
+  });
+
   it("requires focus reviews to include corrective actions before approval", async () => {
     const { repository } = createRepository(
       createReview({
@@ -340,7 +384,7 @@ describe("monthly communication service foundation", () => {
   });
 
   it("publishes only already approved monthly reviews", async () => {
-    const { repository } = createRepository(
+    const { repository, state } = createRepository(
       createReview({
         status: "approved",
         summary_approved: "Jóváhagyott havi összefoglaló.",
@@ -358,6 +402,10 @@ describe("monthly communication service foundation", () => {
     });
 
     expect(updatedReview.status).toBe("published");
+    expect(state.statusUpdates[0]).toEqual({
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      status: "published"
+    });
   });
 
   it("blocks publishing draft monthly reviews", async () => {
@@ -374,5 +422,76 @@ describe("monthly communication service foundation", () => {
     ).rejects.toMatchObject({
       code: "invalid_transition"
     });
+  });
+
+  it("rejects client users before publishing monthly content", async () => {
+    const { repository, state } = createRepository(
+      createReview({
+        status: "approved",
+        summary_approved: "Jóváhagyott havi összefoglaló.",
+        approved_by: agencyProfile.id,
+        approved_at: "2026-08-03T09:30:00Z"
+      })
+    );
+
+    await expect(
+      publishMonthlyReview({
+        currentUser: clientUser,
+        repository,
+        transition: {
+          reviewId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        }
+      })
+    ).rejects.toMatchObject({
+      code: "permission_denied"
+    });
+    expect(state.statusUpdates).toHaveLength(0);
+  });
+
+  it("blocks publishing approved focus reviews without corrective actions", async () => {
+    const { repository } = createRepository(
+      createReview({
+        status: "approved",
+        summary_approved: "Jóváhagyott fókusz összefoglaló.",
+        outcome_type: "focus",
+        corrective_actions: [],
+        approved_by: agencyProfile.id,
+        approved_at: "2026-08-03T09:30:00Z"
+      })
+    );
+
+    await expect(
+      publishMonthlyReview({
+        currentUser: agencyUser,
+        repository,
+        transition: {
+          reviewId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        }
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_content"
+    });
+  });
+
+  it("does not overwrite published monthly reviews as drafts", async () => {
+    const { repository, state } = createRepository(
+      createReview({
+        status: "published",
+        summary_approved: "Publikált történeti ügyfélszöveg.",
+        approved_by: agencyProfile.id,
+        approved_at: "2026-08-02T08:00:00Z"
+      })
+    );
+
+    await expect(
+      saveMonthlyReviewDraft({
+        currentUser: agencyUser,
+        repository,
+        draft: baseDraft
+      })
+    ).rejects.toMatchObject({
+      code: "invalid_transition"
+    });
+    expect(state.savedDrafts).toHaveLength(0);
   });
 });

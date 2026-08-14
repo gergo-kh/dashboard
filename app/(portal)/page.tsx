@@ -18,9 +18,13 @@ import { ReportsCard } from "@/components/overview/reports-card";
 import { EmptyState } from "@/components/ui/state";
 import {
   saveMonthlyReviewDraftAction,
-  submitMonthlyReviewDraftAction
+  submitMonthlyReviewDraftAction,
+  approveMonthlyReviewAction,
+  publishMonthlyReviewAction
 } from "@/app/(portal)/monthly-review-actions";
+import { MonthlyApprovalWorkflow } from "@/components/monthly-communication/monthly-approval-workflow";
 import { createMonthlyReviewEditorViewModel } from "@/lib/monthly-communication/editor-view-model";
+import { getMonthlyReviewApprovalWorkflowViewModel } from "@/lib/monthly-communication/approval-workflow";
 import { createOverviewViewModel } from "@/lib/overview/static-data";
 import { getOverviewDataContext } from "@/lib/overview/service";
 
@@ -31,6 +35,10 @@ export default async function PortalHomePage() {
   const monthlyReviewEditor = createMonthlyReviewEditorViewModel({
     currentUser,
     selectedProject: overviewContext.selectedProject
+  });
+  const monthlyReviewApprovalWorkflow = await getMonthlyReviewApprovalWorkflowViewModel({
+    currentUser,
+    editor: monthlyReviewEditor
   });
 
   if (overviewContext.projects.length === 0) {
@@ -75,11 +83,20 @@ export default async function PortalHomePage() {
       </div>
 
       {monthlyReviewEditor ? (
-        <MonthlyReviewEditor
-          editor={monthlyReviewEditor}
-          saveAction={saveMonthlyReviewDraftAction}
-          submitAction={submitMonthlyReviewDraftAction}
-        />
+        <div className="kh-monthly-agency-grid">
+          <MonthlyReviewEditor
+            editor={monthlyReviewEditor}
+            saveAction={saveMonthlyReviewDraftAction}
+            submitAction={submitMonthlyReviewDraftAction}
+          />
+          {monthlyReviewApprovalWorkflow ? (
+            <MonthlyApprovalWorkflow
+              workflow={monthlyReviewApprovalWorkflow}
+              approveAction={approveMonthlyReviewAction}
+              publishAction={publishMonthlyReviewAction}
+            />
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
