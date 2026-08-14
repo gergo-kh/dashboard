@@ -19,6 +19,20 @@ import { createOverviewViewModel, createPortalShellViewModel } from "@/lib/overv
 import type { AccessibleProject } from "@/lib/auth/session";
 import type { PropsWithChildren } from "react";
 
+const navigationState = vi.hoisted(() => ({
+  pathname: "/",
+  push: vi.fn<(href: string) => void>(),
+  searchParams: ""
+}));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => navigationState.pathname,
+  useRouter: () => ({
+    push: navigationState.push
+  }),
+  useSearchParams: () => new URLSearchParams(navigationState.searchParams)
+}));
+
 vi.mock("@/app/(portal)/actions", () => ({
   signOutAction: vi.fn()
 }));
@@ -68,6 +82,27 @@ const projects = [
       email: "manager@example.invalid",
       avatar_url: null
     }
+  },
+  {
+    id: "project-demo-ro",
+    client_id: "client-demo",
+    name: "Demó RO",
+    slug: "demo-ro",
+    status: "active",
+    country_code: "RO",
+    market_label: "RO",
+    currency_code: "RON",
+    timezone: "Europe/Bucharest",
+    roas_target: "3.8",
+    report_day: 5,
+    assigned_manager_profile_id: "manager-1",
+    client: { id: "client-demo", name: "Demó ügyfél", slug: "demo-client" },
+    assignedManager: {
+      id: "manager-1",
+      full_name: "Teszt PPC manager",
+      email: "manager@example.invalid",
+      avatar_url: null
+    }
   }
 ] satisfies AccessibleProject[];
 
@@ -91,7 +126,12 @@ const shell = createPortalShellViewModel({
   merchantContent: null
 });
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  navigationState.pathname = "/";
+  navigationState.searchParams = "";
+  navigationState.push.mockReset();
+});
 
 function getButton(name: string) {
   return screen.getByRole("button", { name }) as HTMLButtonElement;
@@ -125,8 +165,42 @@ describe("overview interaction hardening", () => {
     );
   });
 
-  it("renders static selectors and header actions as intentionally disabled", () => {
+  it("renders agency project selector as an active URL-persisted control", async () => {
+    const user = userEvent.setup();
     render(createElement(OverviewHeader, { header: overview.header }));
+
+    const projectSelector = screen.getByLabelText("Projekt kiválasztása") as HTMLSelectElement;
+
+    expect(projectSelector.disabled).toBe(false);
+    expect(projectSelector.value).toBe("project-demo-hu");
+    expect(screen.getByText("A projektváltás az URL-ben is megmarad.")).toBeTruthy();
+
+    await user.selectOptions(projectSelector, "project-demo-ro");
+    expect(navigationState.push).toHaveBeenCalledWith("/?projectId=project-demo-ro");
+  });
+
+  it("preserves existing URL params when agency switches project", async () => {
+    const user = userEvent.setup();
+    navigationState.pathname = "/";
+    navigationState.searchParams = "view=overview";
+    render(createElement(OverviewHeader, { header: overview.header }));
+
+    await user.selectOptions(screen.getByLabelText("Projekt kiválasztása"), "project-demo-ro");
+    expect(navigationState.push).toHaveBeenCalledWith("/?view=overview&projectId=project-demo-ro");
+  });
+
+  it("keeps client project selector and other static controls intentionally disabled", () => {
+    const clientOverview = createOverviewViewModel({
+      profileName: "Client User",
+      projects: [projects[0]],
+      role: "client_user",
+      selectedProject: projects[0] ?? null,
+      monthlyContent: null,
+      metricsContent: null,
+      merchantContent: null
+    });
+
+    render(createElement(OverviewHeader, { header: clientOverview.header }));
 
     expect((screen.getByLabelText("Projekt kiválasztása") as HTMLSelectElement).disabled).toBe(
       true
@@ -137,7 +211,7 @@ describe("overview interaction hardening", () => {
     expect(
       (screen.getByLabelText("Összehasonlítás kiválasztása") as HTMLSelectElement).disabled
     ).toBe(true);
-    expect(screen.getByText("A projektváltás a következő fázisban lesz aktív.")).toBeTruthy();
+    expect(screen.getByText("A kliensfiók csak a saját projektjét használhatja.")).toBeTruthy();
     expect(getButton("Kérdezd az AI-t Hamarosan").disabled).toBe(true);
     expect(getButton("Riport letöltése").disabled).toBe(true);
     expect(

@@ -24,6 +24,8 @@ export type OverviewHeaderViewModel = {
   title: string;
   subtitle: string;
   projectSelector: ProjectSelectorItem[];
+  canSwitchProjects: boolean;
+  projectSelectorHelp: string;
   selectedProjectName: string;
   selectedClientName: string;
   managementActivity: ManagementActivityStatus;

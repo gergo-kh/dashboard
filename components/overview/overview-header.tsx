@@ -1,4 +1,5 @@
 import { Bot, Download, Radio, Target } from "lucide-react";
+import { ProjectSelectorControl } from "@/components/overview/project-selector-control";
 import type { OverviewHeaderViewModel } from "@/types/overview";
 
 type OverviewHeaderProps = Readonly<{
@@ -18,24 +19,11 @@ export function OverviewHeader({ header }: OverviewHeaderProps) {
       </div>
 
       <div className="kh-header-controls" aria-label="Áttekintés vezérlők">
-        <label className="kh-control-field">
-          Projekt
-          <select
-            aria-describedby="project-selector-help"
-            aria-label="Projekt kiválasztása"
-            defaultValue={header.selectedProjectName}
-            disabled
-          >
-            {header.projectSelector.map((project) => (
-              <option disabled={!project.isAccessible} key={project.id} value={project.name}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-          <span className="kh-control-help" id="project-selector-help">
-            A projektváltás a következő fázisban lesz aktív.
-          </span>
-        </label>
+        <ProjectSelectorControl
+          canSwitchProjects={header.canSwitchProjects}
+          helpText={header.projectSelectorHelp}
+          projects={header.projectSelector}
+        />
 
         <label className="kh-control-field">
           Időszak

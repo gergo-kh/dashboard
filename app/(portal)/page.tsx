@@ -29,12 +29,18 @@ import { MonthlyApprovalWorkflow } from "@/components/monthly-communication/mont
 import { createMonthlyReviewEditorViewModel } from "@/lib/monthly-communication/editor-view-model";
 import { getMonthlyReviewApprovalWorkflowViewModel } from "@/lib/monthly-communication/approval-workflow";
 import { getMonthlyWorkManagementViewModel } from "@/lib/monthly-communication/work-management-view-model";
+import { getRequestedProjectIdFromSearchParams } from "@/lib/overview/project-selection";
 import { createOverviewViewModel } from "@/lib/overview/static-data";
 import { getOverviewDataContext } from "@/lib/overview/service";
 
-export default async function PortalHomePage() {
+type PortalHomePageProps = Readonly<{
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}>;
+
+export default async function PortalHomePage({ searchParams }: PortalHomePageProps) {
   const currentUser = await requireCurrentUser();
-  const overviewContext = await getOverviewDataContext({ currentUser });
+  const requestedProjectId = getRequestedProjectIdFromSearchParams(await searchParams);
+  const overviewContext = await getOverviewDataContext({ currentUser, requestedProjectId });
   const overview = createOverviewViewModel(overviewContext);
   const monthlyReviewEditor = createMonthlyReviewEditorViewModel({
     currentUser,

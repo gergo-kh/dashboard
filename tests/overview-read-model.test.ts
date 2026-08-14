@@ -126,6 +126,18 @@ describe("overview read model foundation", () => {
     expect(context.selectedProject?.id).toBe("project-2");
   });
 
+  it("does not let client users select another client's project by query param", async () => {
+    const context = await getOverviewDataContext({
+      currentUser: createCurrentUser(clientProfile),
+      requestedProjectId: "project-2",
+      repository: createOverviewRepository()
+    });
+
+    expect(context.projects.map((project) => project.id)).toEqual(["project-1"]);
+    expect(context.selectedProject?.id).toBe("project-1");
+    expect(context.selectedProject?.client_id).toBe("client-1");
+  });
+
   it("falls back safely when no projects are accessible", async () => {
     const context = await getOverviewDataContext({
       currentUser: createCurrentUser(clientProfile, []),
