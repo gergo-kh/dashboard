@@ -4,12 +4,18 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { MonthlyApprovalWorkflow } from "@/components/monthly-communication/monthly-approval-workflow";
 import { MonthlyReviewEditor } from "@/components/monthly-communication/monthly-review-editor";
 import type { MonthlyReviewEditorActionState } from "@/app/(portal)/monthly-review-actions";
+import {
+  createMonthlyReviewApprovalWorkflowViewModel,
+  getMonthlyReviewApprovalWorkflowViewModel
+} from "@/lib/monthly-communication/approval-workflow";
 import { createMonthlyReviewEditorViewModel } from "@/lib/monthly-communication/editor-view-model";
 import { monthlyReviewDraftFromFormData } from "@/lib/monthly-communication/form-data";
 import { monthlyReviewDraftSchema } from "@/lib/monthly-communication/schemas";
 import type { AccessibleProject, CurrentUser, UserProfile } from "@/lib/auth/session";
+import type { MonthlyReviewRecord } from "@/lib/monthly-communication/types";
 import type { User } from "@supabase/supabase-js";
 
 const agencyProfile = {
@@ -92,11 +98,47 @@ function createEditor() {
   return editor;
 }
 
+function createReview(overrides: Partial<MonthlyReviewRecord> = {}): MonthlyReviewRecord {
+  return {
+    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    project_id: project.id,
+    period_start: "2026-08-01",
+    period_end: "2026-08-31",
+    summary_draft: "A hónap vázlatos összefoglalója.",
+    summary_approved: null,
+    outcome_type: "mixed",
+    outcome_items: [
+      {
+        label: "ROAS",
+        value: "+8%",
+        state: "positive"
+      }
+    ],
+    corrective_actions: ["A következő havi fókusz rögzítve."],
+    next_month_plan: [
+      {
+        title: "Shopping fókusz",
+        detail: "A fő termékkategóriák priorizálása."
+      }
+    ],
+    status: "review",
+    approved_by: null,
+    approved_at: null,
+    created_at: "2026-08-01T00:00:00Z",
+    updated_at: "2026-08-02T00:00:00Z",
+    ...overrides
+  };
+}
+
 const successAction = vi.fn(async () => ({
   status: "success",
   message: "Mentve.",
   fieldErrors: {}
 }) satisfies MonthlyReviewEditorActionState);
+
+function getButton(name: string) {
+  return screen.getByRole("button", { name }) as HTMLButtonElement;
+}
 
 afterEach(() => {
   cleanup();
@@ -190,5 +232,121 @@ describe("monthly review editor foundation", () => {
         detail: "A fő termékkategóriák priorizálása."
       }
     ]);
+  });
+
+  it("renders approval workflow actions for review-state monthly content", async () => {
+    const user = userEvent.setup();
+    const approveAction = vi.fn(successAction);
+    const publishAction = vi.fn(successAction);
+    const workflow = createMonthlyReviewApprovalWorkflowViewModel(createReview());
+
+    render(createElement(MonthlyApprovalWorkflow, {
+      workflow,
+      approveAction,
+      publishAction
+    }));
+
+    expect(screen.getByRole("heading", { name: "Havi összefoglaló jóváhagyása" })).toBeTruthy();
+    expect(screen.getByText("Jóváhagyásra vár")).toBeTruthy();
+    expect(screen.getByLabelText("Jóváhagyott ügyfélszöveg")).toBeTruthy();
+    expect(getButton("Jóváhagyás").disabled).toBe(false);
+    expect(getButton("Publikálás").disabled).toBe(true);
+    expect(screen.getByText("Publikálás előtt jóvá kell hagyni az ügyfélszöveget.")).toBeTruthy();
+
+    await user.click(getButton("Jóváhagyás"));
+    expect(approveAction).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not create approval workflow for client users", async () => {
+    const workflow = await getMonthlyReviewApprovalWorkflowViewModel({
+      currentUser: createCurrentUser(clientProfile),
+      editor: createEditor(),
+      repository: {
+        async findMonthlyReviewByProjectPeriod() {
+          return createReview();
+        },
+        async findMonthlyReviewById() {
+          return createReview();
+        },
+        async upsertMonthlyReviewDraft() {
+          return createReview();
+        },
+        async updateMonthlyReviewStatus() {
+          return createReview();
+        }
+      }
+    });
+
+    expect(workflow).toBeNull();
+  });
+
+  it("renders approval validation feedback in Hungarian", () => {
+    render(createElement(MonthlyApprovalWorkflow, {
+      workflow: createMonthlyReviewApprovalWorkflowViewModel(createReview()),
+      approveAction: successAction,
+      publishAction: successAction,
+      initialState: {
+        status: "error",
+        message: "Ellenőrizd a kiemelt mezőket, és próbáld újra.",
+        fieldErrors: {
+          approvedSummary: "A jóváhagyott ügyfélszöveg nem lehet üres."
+        }
+      }
+    }));
+
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(screen.getByText("A jóváhagyott ügyfélszöveg nem lehet üres.")).toBeTruthy();
+  });
+
+  it("renders publish workflow for approved monthly content without allowing approved text edits", async () => {
+    const user = userEvent.setup();
+    const approveAction = vi.fn(successAction);
+    const publishAction = vi.fn(successAction);
+    const workflow = createMonthlyReviewApprovalWorkflowViewModel(
+      createReview({
+        status: "approved",
+        summary_approved: "Jóváhagyott ügyfélszöveg.",
+        approved_by: agencyProfile.id,
+        approved_at: "2026-08-03T09:30:00Z"
+      })
+    );
+
+    render(createElement(MonthlyApprovalWorkflow, {
+      workflow,
+      approveAction,
+      publishAction
+    }));
+
+    expect(screen.getByText("Jóváhagyva")).toBeTruthy();
+    expect(getButton("Jóváhagyás").disabled).toBe(true);
+    expect(screen.getByText("Jóváhagyott történeti tartalmat ez a workflow nem ír felül.")).toBeTruthy();
+    expect(getButton("Publikálás").disabled).toBe(false);
+
+    await user.click(getButton("Publikálás"));
+    expect(publishAction).toHaveBeenCalledTimes(1);
+  });
+
+  it("blocks publish UI for approved focus content without corrective actions", () => {
+    const workflow = createMonthlyReviewApprovalWorkflowViewModel(
+      createReview({
+        status: "approved",
+        summary_approved: "Jóváhagyott fókusz szöveg.",
+        outcome_type: "focus",
+        corrective_actions: [],
+        approved_by: agencyProfile.id,
+        approved_at: "2026-08-03T09:30:00Z"
+      })
+    );
+
+    render(createElement(MonthlyApprovalWorkflow, {
+      workflow,
+      approveAction: successAction,
+      publishAction: successAction
+    }));
+
+    expect(getButton("Publikálás").disabled).toBe(true);
+    expect(
+      screen.getByText("Fókuszt igénylő havi eredmény nem publikálható javító lépés nélkül.")
+    ).toBeTruthy();
   });
 });

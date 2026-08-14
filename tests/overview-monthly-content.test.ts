@@ -144,4 +144,24 @@ describe("monthly overview Supabase content mapping", () => {
     expect(content.currentWork).toEqual([]);
     expect(content.completedOptimizations).toEqual([]);
   });
+
+  it("does not map draft or review monthly review rows into client-facing content", () => {
+    const content = createMonthlyOverviewContent({
+      ...approvedRows,
+      monthlyReview: approvedRows.monthlyReview
+        ? {
+            ...approvedRows.monthlyReview,
+            summary_approved: null,
+            status: "review"
+          }
+        : null,
+      reports: [],
+      optimizationItems: [],
+      clientActionItems: []
+    });
+
+    expect(content.monthlySummary.status).toBe("draft");
+    expect(content.monthlyOutcome.title).toBe("Havi értékelés még nem elérhető");
+    expect(content.nextMonthPlan).toEqual([]);
+  });
 });

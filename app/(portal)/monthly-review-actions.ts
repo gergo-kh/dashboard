@@ -4,8 +4,14 @@ import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
 import { requireCurrentUser } from "@/lib/auth/session";
 import { createMonthlyCommunicationRepository } from "@/lib/monthly-communication/repository";
-import { monthlyReviewDraftFromFormData } from "@/lib/monthly-communication/form-data";
 import {
+  monthlyReviewApprovalFromFormData,
+  monthlyReviewDraftFromFormData,
+  monthlyReviewTransitionFromFormData
+} from "@/lib/monthly-communication/form-data";
+import {
+  approveMonthlyReview,
+  publishMonthlyReview,
   saveMonthlyReviewDraft,
   submitMonthlyReviewForReview
 } from "@/lib/monthly-communication/service";
@@ -30,6 +36,58 @@ export async function submitMonthlyReviewDraftAction(
   formData: FormData
 ): Promise<MonthlyReviewEditorActionState> {
   return persistMonthlyReviewDraft(formData, "submit");
+}
+
+export async function approveMonthlyReviewAction(
+  _previousState: MonthlyReviewEditorActionState,
+  formData: FormData
+): Promise<MonthlyReviewEditorActionState> {
+  try {
+    const currentUser = await requireCurrentUser();
+    const supabase = await createServerSupabaseClient();
+    const repository = createMonthlyCommunicationRepository(supabase);
+
+    await approveMonthlyReview({
+      currentUser,
+      repository,
+      approval: monthlyReviewApprovalFromFormData(formData)
+    });
+    revalidatePath("/");
+
+    return {
+      status: "success",
+      message: "A havi összefoglaló jóváhagyva.",
+      fieldErrors: {}
+    };
+  } catch (error) {
+    return toEditorActionErrorState(error);
+  }
+}
+
+export async function publishMonthlyReviewAction(
+  _previousState: MonthlyReviewEditorActionState,
+  formData: FormData
+): Promise<MonthlyReviewEditorActionState> {
+  try {
+    const currentUser = await requireCurrentUser();
+    const supabase = await createServerSupabaseClient();
+    const repository = createMonthlyCommunicationRepository(supabase);
+
+    await publishMonthlyReview({
+      currentUser,
+      repository,
+      transition: monthlyReviewTransitionFromFormData(formData)
+    });
+    revalidatePath("/");
+
+    return {
+      status: "success",
+      message: "A havi összefoglaló publikálva.",
+      fieldErrors: {}
+    };
+  } catch (error) {
+    return toEditorActionErrorState(error);
+  }
 }
 
 async function persistMonthlyReviewDraft(
@@ -138,6 +196,10 @@ function translateValidationIssue(field: string) {
 
   if (field.startsWith("nextMonthPlan.")) {
     return "A tervsor címe és részlete is szükséges.";
+  }
+
+  if (field === "approvedSummary") {
+    return "A jóváhagyott ügyfélszöveg nem lehet üres.";
   }
 
   return "Ez a mező ellenőrzést igényel.";

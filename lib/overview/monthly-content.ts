@@ -157,7 +157,7 @@ export function createMonthlyOverviewContent(
 }
 
 function createMonthlySummary(row: MonthlyReviewContentRow | null): MonthlySummary | null {
-  if (!row?.summary_approved) {
+  if (!isClientVisibleMonthlyReview(row)) {
     return null;
   }
 
@@ -173,7 +173,7 @@ function createMonthlySummary(row: MonthlyReviewContentRow | null): MonthlySumma
 }
 
 function createMonthlyOutcome(row: MonthlyReviewContentRow | null): MonthlyOutcomeState | null {
-  if (!row) {
+  if (!isClientVisibleMonthlyReview(row)) {
     return null;
   }
 
@@ -198,13 +198,23 @@ function createMonthlyOutcome(row: MonthlyReviewContentRow | null): MonthlyOutco
 }
 
 function createNextMonthPlan(row: MonthlyReviewContentRow | null): NextMonthPlanItem[] {
-  if (!row) {
+  if (!isClientVisibleMonthlyReview(row)) {
     return [];
   }
 
   const parsed = nextMonthPlanSchema.safeParse(row.next_month_plan);
 
   return parsed.success ? parsed.data : [];
+}
+
+function isClientVisibleMonthlyReview(
+  row: MonthlyReviewContentRow | null
+): row is MonthlyReviewContentRow & { summary_approved: string } {
+  if (!row?.summary_approved) {
+    return false;
+  }
+
+  return row.status === "approved" || row.status === "published";
 }
 
 function createReportsViewModel(rows: ReportContentRow[]): ReportsViewModel {
