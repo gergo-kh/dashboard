@@ -10,11 +10,20 @@ import {
   monthlyReviewTransitionFromFormData
 } from "@/lib/monthly-communication/form-data";
 import {
+  clientActionItemFromFormData,
+  optimizationItemFromFormData
+} from "@/lib/monthly-communication/work-management-form-data";
+import { createMonthlyWorkManagementRepository } from "@/lib/monthly-communication/work-management-repository";
+import {
   approveMonthlyReview,
   publishMonthlyReview,
   saveMonthlyReviewDraft,
   submitMonthlyReviewForReview
 } from "@/lib/monthly-communication/service";
+import {
+  saveClientActionItem,
+  saveOptimizationItem
+} from "@/lib/monthly-communication/work-management";
 import { MonthlyCommunicationError } from "@/lib/monthly-communication/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -83,6 +92,58 @@ export async function publishMonthlyReviewAction(
     return {
       status: "success",
       message: "A havi összefoglaló publikálva.",
+      fieldErrors: {}
+    };
+  } catch (error) {
+    return toEditorActionErrorState(error);
+  }
+}
+
+export async function saveOptimizationItemAction(
+  _previousState: MonthlyReviewEditorActionState,
+  formData: FormData
+): Promise<MonthlyReviewEditorActionState> {
+  try {
+    const currentUser = await requireCurrentUser();
+    const supabase = await createServerSupabaseClient();
+    const repository = createMonthlyWorkManagementRepository(supabase);
+
+    await saveOptimizationItem({
+      currentUser,
+      repository,
+      item: optimizationItemFromFormData(formData)
+    });
+    revalidatePath("/");
+
+    return {
+      status: "success",
+      message: "Az optimalizálás mentve.",
+      fieldErrors: {}
+    };
+  } catch (error) {
+    return toEditorActionErrorState(error);
+  }
+}
+
+export async function saveClientActionItemAction(
+  _previousState: MonthlyReviewEditorActionState,
+  formData: FormData
+): Promise<MonthlyReviewEditorActionState> {
+  try {
+    const currentUser = await requireCurrentUser();
+    const supabase = await createServerSupabaseClient();
+    const repository = createMonthlyWorkManagementRepository(supabase);
+
+    await saveClientActionItem({
+      currentUser,
+      repository,
+      item: clientActionItemFromFormData(formData)
+    });
+    revalidatePath("/");
+
+    return {
+      status: "success",
+      message: "Az ügyfélteendő mentve.",
       fieldErrors: {}
     };
   } catch (error) {
@@ -200,6 +261,42 @@ function translateValidationIssue(field: string) {
 
   if (field === "approvedSummary") {
     return "A jóváhagyott ügyfélszöveg nem lehet üres.";
+  }
+
+  if (field === "title") {
+    return "A cím nem lehet üres.";
+  }
+
+  if (field === "category") {
+    return "A kategória nem érvényes.";
+  }
+
+  if (field === "status") {
+    return "A státusz nem érvényes.";
+  }
+
+  if (field === "approvalStatus") {
+    return "A jóváhagyási állapot nem érvényes.";
+  }
+
+  if (field === "isClientVisible") {
+    return "Csak jóváhagyott optimalizálás lehet ügyfélnek látható.";
+  }
+
+  if (field === "priority") {
+    return "A prioritás nem érvényes.";
+  }
+
+  if (field === "visibility") {
+    return "A láthatósági állapot nem érvényes.";
+  }
+
+  if (field === "dueDate" || field === "resolvedDate" || field === "completedDate") {
+    return "Érvényes dátumot adj meg.";
+  }
+
+  if (field === "affectedCount") {
+    return "Az érintett elemek száma nem lehet negatív.";
   }
 
   return "Ez a mező ellenőrzést igényel.";
