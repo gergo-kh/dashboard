@@ -31,6 +31,7 @@ const providerSchema = z.enum([
 ]);
 
 const metricNumberSchema = z.union([z.string(), z.number()]).nullable();
+const supabaseTimestampSchema = z.string().datetime({ offset: true });
 
 const dailyMetricContentRowSchema = z.object({
   metric_date: z.string().date(),
@@ -41,7 +42,7 @@ const dailyMetricContentRowSchema = z.object({
   platform_conversion_value: metricNumberSchema,
   platform_conversions: metricNumberSchema,
   currency_code: z.string().trim().length(3).nullable(),
-  updated_at: z.string().datetime()
+  updated_at: supabaseTimestampSchema
 });
 
 export type DailyMetricContentRow = Readonly<z.input<typeof dailyMetricContentRowSchema>>;

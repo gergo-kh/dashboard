@@ -8,7 +8,7 @@ import {
 } from "@/lib/overview/merchant-products";
 
 const projectId = "30000000-0000-4000-8000-000000000001";
-const updatedAt = "2026-08-01T06:10:00Z";
+const updatedAt = "2026-08-01T06:10:00.123456+00:00";
 
 function createProduct(input: {
   id: string;
@@ -111,6 +111,41 @@ describe("merchant attention products read model", () => {
       issueLabel: "hiányzó GTIN",
       detail: "Pótold a gyártói azonosítót a feedben."
     });
+  });
+
+  it("accepts Supabase timestamptz values with explicit UTC offsets", () => {
+    const productId = "40000000-0000-4000-8000-000000000021";
+    const content = createMerchantAttentionProducts({
+      projectCurrencyCode: "HUF",
+      products: [
+        createProduct({
+          id: productId,
+          title: "Offset timestamp termék",
+          externalProductId: "OFFSET-1"
+        })
+      ],
+      metrics: [
+        createMetric({
+          productId,
+          spend: "10000",
+          revenue: "25000",
+          purchases: "1"
+        })
+      ],
+      issues: [
+        createIssue({
+          id: "50000000-0000-4000-8000-000000000021",
+          productId,
+          issueType: "feed",
+          title: "Feed ellenőrzés szükséges",
+          detectedAt: "2026-07-31T07:00:00+00:00"
+        })
+      ]
+    });
+
+    expect(content).toHaveLength(1);
+    expect(content[0]?.name).toBe("Offset timestamp termék");
+    expect(content[0]?.roasLabel).toBe("2,5");
   });
 
   it("excludes hidden products, inactive issues, and orphan metric rows", () => {
