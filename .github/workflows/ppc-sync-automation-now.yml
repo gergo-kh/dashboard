@@ -1,0 +1,39 @@
+name: PPC Sync Automation Now
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/ppc-sync-automation-now.yml"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      WINDSOR_API_KEY: ${{ secrets.WINDSOR_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PPC_TIME_ZONE: Europe/Budapest
+      PPC_AS_OF_DATE: "2026-08-07"
+      PPC_BACKFILL_DAYS: "7"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$WINDSOR_API_KEY"
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_SERVICE_ROLE_KEY"
+      - name: Sync Google Ads dashboard snapshots
+        run: node scripts/sync-ppc-google-ads.mjs
+      - name: Sync Meta Ads dashboard snapshots
+        run: node scripts/sync-ppc-meta-ads.mjs
