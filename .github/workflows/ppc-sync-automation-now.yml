@@ -17,7 +17,7 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       PPC_TIME_ZONE: Europe/Budapest
-      PPC_AS_OF_DATE: "2026-08-07"
+      PPC_AS_OF_DATE: "2026-08-27"
       PPC_BACKFILL_DAYS: "7"
     steps:
       - name: Checkout
