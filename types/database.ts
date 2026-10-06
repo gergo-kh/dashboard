@@ -121,6 +121,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      client_report_shares: {
+        Row: {
+          id: string;
+          client_id: string;
+          token: string;
+          is_active: boolean;
+          revoked_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          token: string;
+          is_active?: boolean;
+          revoked_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          token?: string;
+          is_active?: boolean;
+          revoked_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       client_reports: {
         Row: {
           id: string;
@@ -586,7 +615,36 @@ export type Database = {
       reports: GenericTable<{ id: string; project_id: string } & TimestampColumns>;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      resolve_client_report_share: {
+        Args: {
+          p_token: string;
+          p_month?: string | null;
+        };
+        Returns: Array<{
+          client_slug: string;
+          report_month: string;
+        }>;
+      };
+      get_shared_client_report: {
+        Args: {
+          p_token: string;
+          p_month: string;
+        };
+        Returns: Json[];
+      };
+      get_shared_client_report_archive: {
+        Args: {
+          p_token: string;
+        };
+        Returns: Array<{
+          report_month: string;
+          combined: Json;
+          meta: Json;
+          google: Json;
+        }>;
+      };
+    };
     Enums: {
       profile_role: ProfileRole;
       monthly_outcome_type: MonthlyOutcomeType;
