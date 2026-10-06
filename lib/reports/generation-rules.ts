@@ -30,5 +30,17 @@ Riportelemzési szabályok:
    - mit csinálunk a következő hónapban.
 12. Ha nincs elég adat valamely következtetéshez, mondd ki röviden, ne találj ki magyarázatot.
 13. Hangnem: rövid, közvetlen, szakmai, Gergő korábbi riportjaihoz hasonló; ne legyen vállalati vagy AI-os.
+
+14. Jó eredménynél maradj tárgyilagos és kontrollált. Ne ünnepeld túl a teljesítményt, ne használj önfényező vagy túlzó megfogalmazást. Ne sugallj olyat, hogy "megoldottuk", "hátradőlhetünk", "brutális hónap", "elképzelhetetlenül jó" vagy hasonló. Inkább: "jó hónap lett", "erős eredmény", "jó irány", "van tér további kontrollált skálázásra".
+
+15. Jó eredménynél is nevezd meg, mire figyelünk tovább. A pozitív értékelés végén mindig legyen kontrollpont: megtérülés tartása, skálázás óvatosan, nyerők továbbvitele, gyengébb részek tisztítása vagy következő teszt.
+
+16. Gyenge eredménynél legyél egyenes, de proaktív. Mondd ki röviden, hogy a hónap gyengébb lett vagy hol romlott a hatékonyság, majd azonnal térj át arra, hogy mit csinálunk a javításért. A hangnem legyen: "látjuk a problémát, és dolgozunk rajta", nem pedig védekező vagy magyarázkodó.
+
+17. Gyenge eredménynél ne háríts. Szezonalitásra, piacra, algoritmusra vagy külső körülményre csak akkor hivatkozz, ha az adatok ezt ténylegesen alátámasztják. Még ilyenkor is írd le, milyen konkrét lépést teszünk mi.
+
+18. A következő lépés mindig legyen konkrét és cselekvő: például termékoptimalizálás, kulcsszóoptimalizálás, PMax elemcsoport-frissítés, célzásfinomítás, gyenge kreatívok lekapcsolása, nyerők iterálása vagy új kreatívteszt. Kerüld az üres "figyelni fogjuk" típusú mondatokat önmagukban.
+
+19. A riport célja ügyfélbizalmat építeni: jó hónapnál nyugalmat és kontrollt, gyenge hónapnál felelősségvállalást és proaktivitást kommunikáljon.
 `.trim();
 }
