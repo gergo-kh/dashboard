@@ -137,6 +137,7 @@ export type Database = {
           meta: Json;
           google: Json;
           campaigns: Json;
+          analysis_context: Json;
           monthly_summary: string | null;
           what_went_well: string | null;
           google_improvements: string | null;
@@ -160,6 +161,7 @@ export type Database = {
           meta?: Json;
           google?: Json;
           campaigns?: Json;
+          analysis_context?: Json;
           monthly_summary?: string | null;
           what_went_well?: string | null;
           google_improvements?: string | null;
@@ -183,6 +185,7 @@ export type Database = {
           meta?: Json;
           google?: Json;
           campaigns?: Json;
+          analysis_context?: Json;
           monthly_summary?: string | null;
           what_went_well?: string | null;
           google_improvements?: string | null;
