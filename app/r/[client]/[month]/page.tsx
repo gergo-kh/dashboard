@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { buildReportAnalysis } from "@/lib/reports/analysis";
 import type { Json } from "@/types/database";
 import { PrintButton } from "./print-button";
 
@@ -105,11 +106,6 @@ function deltaClass(value: number, lowerIsBetter = false) {
   return good ? "text-emerald-700" : "text-red-700";
 }
 
-function percentChange(current: number, previous: number) {
-  if (previous === 0) return null;
-  return ((current - previous) / previous) * 100;
-}
-
 export default async function ClientReportPage({ params }: PageProps) {
   const { client, month } = await params;
   const supabase = await createServerSupabaseClient();
@@ -125,7 +121,7 @@ export default async function ClientReportPage({ params }: PageProps) {
       .maybeSingle(),
     supabase
       .from("client_reports")
-      .select("report_month")
+      .select("report_month, combined, meta, google")
       .eq("client_slug", client)
       .order("report_month", { ascending: false }),
     supabase
@@ -140,14 +136,35 @@ export default async function ClientReportPage({ params }: PageProps) {
     notFound();
   }
 
+  const analysis = buildReportAnalysis(
+    {
+      report_month: report.report_month,
+      combined: report.combined,
+      meta: report.meta,
+      google: report.google
+    },
+    (archive ?? []).map((item) => ({
+      report_month: item.report_month,
+      combined: item.combined,
+      meta: item.meta,
+      google: item.google
+    }))
+  );
+
   const combined = asObject(report.combined);
   const meta = asObject(report.meta);
   const google = asObject(report.google);
   const priorCombined = priorYearReport ? asObject(priorYearReport.combined) : {};
   const priorMeta = priorYearReport ? asObject(priorYearReport.meta) : {};
   const priorGoogle = priorYearReport ? asObject(priorYearReport.google) : {};
-  const hasMeta = Object.keys(meta).length > 0;
-  const hasGoogle = Object.keys(google).length > 0;
+  const hasMeta =
+    asNumber(meta.spend) > 0 ||
+    asNumber(meta.impressions) > 0 ||
+    asNumber(meta.revenue) > 0;
+  const hasGoogle =
+    asNumber(google.spend) > 0 ||
+    asNumber(google.impressions) > 0 ||
+    asNumber(google.revenue) > 0;
   const platformLabel = hasMeta && hasGoogle ? "Meta Ads + Google Ads" : hasMeta ? "Meta Ads" : "Google Ads";
   const hasStructuredSummary = Boolean(
     report.what_went_well || report.google_improvements || report.facebook_improvements
@@ -202,9 +219,9 @@ export default async function ClientReportPage({ params }: PageProps) {
   const priorTotalSpend = asNumber(priorCombined.spend);
   const priorTotalRevenue = asNumber(priorCombined.attributed_value);
   const priorTotalRoas = asNumber(priorCombined.roas);
-  const yoySpend = priorYearReport ? percentChange(totalSpend, priorTotalSpend) : null;
-  const yoyRevenue = priorYearReport ? percentChange(totalRevenue, priorTotalRevenue) : null;
-  const yoyRoas = priorYearReport ? percentChange(totalRoas, priorTotalRoas) : null;
+  const yoySpend = analysis.yoy.combined.spendPct;
+  const yoyRevenue = analysis.yoy.combined.valuePct;
+  const yoyRoas = analysis.yoy.combined.roasPct;
   const priorMetaRoas = asNumber(priorMeta.roas);
   const priorGoogleRoas = asNumber(priorGoogle.roas);
 
@@ -313,40 +330,75 @@ export default async function ClientReportPage({ params }: PageProps) {
                 Tavalyi riport megnyitása →
               </a>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <YoyCard
-                label="Hirdetési költés"
-                current={formatHuf(totalSpend)}
-                previous={formatHuf(priorTotalSpend)}
-                change={yoySpend}
-              />
-              <YoyCard
-                label="Attribútált bevétel"
-                current={formatHuf(totalRevenue)}
-                previous={formatHuf(priorTotalRevenue)}
-                change={yoyRevenue}
-              />
-              <YoyCard
-                label="Összesített ROAS"
-                current={formatDecimal(totalRoas) + "×"}
-                previous={formatDecimal(priorTotalRoas) + "×"}
-                change={yoyRoas}
-              />
-            </div>
-            {(priorMetaRoas > 0 || priorGoogleRoas > 0) && (
+            {analysis.yoy.combined.comparable ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <YoyCard
+                  label="Hirdetési költés"
+                  current={formatHuf(totalSpend)}
+                  previous={formatHuf(priorTotalSpend)}
+                  change={yoySpend}
+                />
+                <YoyCard
+                  label="Attribútált bevétel"
+                  current={formatHuf(totalRevenue)}
+                  previous={formatHuf(priorTotalRevenue)}
+                  change={yoyRevenue}
+                />
+                <YoyCard
+                  label="Összesített ROAS"
+                  current={formatDecimal(totalRoas) + "×"}
+                  previous={formatDecimal(priorTotalRoas) + "×"}
+                  change={yoyRoas}
+                />
+              </div>
+            ) : (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                Az összesített év/év összehasonlítást nem mutatjuk, mert a csatornafedezet nem azonos
+                a két időszakban. Ilyenkor csak az összehasonlítható platformokat értékeljük.
+              </div>
+            )}
+            {(analysis.yoy.meta.comparable || analysis.yoy.google.comparable) && (
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
-                {priorMetaRoas > 0 && metaRoas > 0 && (
+                {analysis.yoy.meta.comparable && priorMetaRoas > 0 && metaRoas > 0 && (
                   <span className="rounded-full bg-white px-3 py-2 ring-1 ring-slate-200">
                     Meta ROAS: {formatDecimal(priorMetaRoas)}× → {formatDecimal(metaRoas)}×
+                    {analysis.yoy.meta.roasPct !== null ? ` · ${formatPct(analysis.yoy.meta.roasPct)} év/év` : ""}
                   </span>
                 )}
-                {priorGoogleRoas > 0 && googleRoas > 0 && (
+                {analysis.yoy.google.comparable && priorGoogleRoas > 0 && googleRoas > 0 && (
                   <span className="rounded-full bg-white px-3 py-2 ring-1 ring-slate-200">
                     Google ROAS: {formatDecimal(priorGoogleRoas)}× → {formatDecimal(googleRoas)}×
+                    {analysis.yoy.google.roasPct !== null ? ` · ${formatPct(analysis.yoy.google.roasPct)} év/év` : ""}
                   </span>
                 )}
               </div>
             )}
+          </section>
+        )}
+
+
+        {(analysis.seasonality.available ||
+          analysis.rolling.threeMonths.availableMonths > 1) && (
+          <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+              <div>
+                <h2 className="text-xl font-black">Szezonalitás és trend</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {analysis.seasonality.label}
+                </p>
+              </div>
+              {analysis.seasonality.available && (
+                <div className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700">
+                  Hó/hó: {formatPct(analysis.seasonality.currentMomValuePct ?? 0)} · tavaly ugyanez:{" "}
+                  {formatPct(analysis.seasonality.priorYearMomValuePct ?? 0)}
+                </div>
+              )}
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <TrendCard label="3 havi trend" window={analysis.rolling.threeMonths} />
+              <TrendCard label="6 havi trend" window={analysis.rolling.sixMonths} />
+              <TrendCard label="12 havi trend" window={analysis.rolling.twelveMonths} />
+            </div>
           </section>
         )}
 
@@ -555,6 +607,35 @@ function PlatformCard({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+
+function TrendCard({
+  label,
+  window
+}: {
+  label: string;
+  window: {
+    availableMonths: number;
+    coverageConsistent: boolean;
+    attributedValue: number;
+    roas: number;
+  };
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 p-4">
+      <div className="text-xs font-semibold text-slate-500">{label}</div>
+      <div className="mt-1 text-lg font-black">{formatDecimal(window.roas)}× ROAS</div>
+      <div className="mt-1 text-xs text-slate-500">
+        {formatHuf(window.attributedValue)} attribútált érték · {window.availableMonths} hó
+      </div>
+      {!window.coverageConsistent && (
+        <div className="mt-2 text-xs font-bold text-amber-700">
+          Csatornafedezet változott – csak iránymutató trend.
+        </div>
+      )}
     </div>
   );
 }
