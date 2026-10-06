@@ -108,18 +108,6 @@ function formatPct(value: number, digits = 1) {
   return prefix + formatDecimal(Math.abs(value), digits) + "%";
 }
 
-function formatDate(dateValue: string | null, includeYear = true) {
-  if (!dateValue) return "";
-  const [year, month, day] = dateValue.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return new Intl.DateTimeFormat("hu-HU", {
-    year: includeYear ? "numeric" : undefined,
-    month: "long",
-    day: "numeric",
-    timeZone: "UTC"
-  }).format(date);
-}
-
 function formatShortDate(dateValue: string | null) {
   if (!dateValue) return "";
   return dateValue.replaceAll("-", ".");
@@ -348,15 +336,6 @@ export default async function ClientReportPage({ params }: PageProps) {
       : [])
   ].slice(0, 4);
 
-  const navItems = [
-    ["Összkép", "#overview"],
-    ["Részletes elemzés", "#analysis"],
-    ...(hasMeta ? [["Meta", "#meta"]] : []),
-    ...(hasGoogle ? [["Google", "#google"]] : []),
-    ["Trendek", "#trends"],
-    ["Korábbi riportok", "#archive"]
-  ];
-
   return (
     <main className="min-h-screen bg-[#f6f9fc] text-[#0d1b3e] print:bg-white">
       <div className="mx-auto max-w-[1380px] px-4 py-5 sm:px-6 lg:px-8 print:max-w-none print:p-0">
@@ -364,11 +343,12 @@ export default async function ClientReportPage({ params }: PageProps) {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <Image
-                src="/kh-logo.webp"
+                src="/kh-logo.svg"
                 alt="KonverzióHuszár"
                 width={242}
                 height={44}
                 priority
+                unoptimized
                 className="h-auto w-[185px] shrink-0 sm:w-[220px]"
               />
               <div className="hidden h-8 w-px bg-slate-200 sm:block" />
@@ -418,44 +398,19 @@ export default async function ClientReportPage({ params }: PageProps) {
               <PrintButton />
             </div>
           </div>
-
-          <nav className="mt-4 flex gap-2 overflow-x-auto border-t border-slate-100 pt-4 print:hidden">
-            {navItems.map(([label, href], index) => (
-              <a
-                key={href}
-                href={href}
-                className={
-                  index === 0
-                    ? "whitespace-nowrap rounded-full bg-[#15284d] px-5 py-2.5 text-sm font-bold text-white"
-                    : "whitespace-nowrap rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:border-slate-300 hover:text-slate-950"
-                }
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
         </header>
 
         <section
           id="overview"
           className="mt-5 scroll-mt-4 rounded-[24px] border border-emerald-100/70 bg-gradient-to-br from-[#f4fbf8] via-white to-[#f3f8ff] p-4 shadow-[0_12px_38px_rgba(15,23,42,0.04)] sm:p-5"
         >
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-emerald-100 p-2 text-emerald-600">
-                <BarChart3 className="h-5 w-5" />
-              </div>
-              <h2 className="text-xl font-black text-[#0b1739]">
-                Fő mutatók – {formatMonthLabel(report.report_month)}
-              </h2>
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-xl bg-emerald-100 p-2 text-emerald-600">
+              <BarChart3 className="h-5 w-5" />
             </div>
-            <div className="flex flex-wrap gap-1 rounded-xl bg-white/80 p-1 text-xs font-bold text-slate-500 ring-1 ring-slate-200/70">
-              <span className="rounded-lg bg-[#15284d] px-3 py-1.5 text-white">Hó/hó</span>
-              <span className="px-3 py-1.5">Év/év</span>
-              <span className="px-3 py-1.5">3 hónap</span>
-              <span className="px-3 py-1.5">6 hónap</span>
-              <span className="px-3 py-1.5">12 hónap</span>
-            </div>
+            <h2 className="text-xl font-black text-[#0b1739]">
+              Fő mutatók – {formatMonthLabel(report.report_month)}
+            </h2>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
