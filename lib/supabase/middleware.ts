@@ -11,6 +11,10 @@ const publicRoutes = new Set([
   "/auth/callback"
 ]);
 
+function isPublicRoute(pathname: string) {
+  return publicRoutes.has(pathname) || pathname === "/r" || pathname.startsWith("/r/");
+}
+
 export type AuthRouteDecisionInput = {
   pathname: string;
   returnTo?: string;
@@ -30,7 +34,7 @@ export function getAuthRouteDecision({
     return { type: "redirect", destination: "/" };
   }
 
-  if (!isAuthenticated && !publicRoutes.has(pathname)) {
+  if (!isAuthenticated && !isPublicRoute(pathname)) {
     const safeReturnTo = sanitizeInternalRedirectPath(returnTo ?? pathname);
     const next = safeReturnTo === "/" ? "" : `?next=${encodeURIComponent(safeReturnTo)}`;
     return { type: "redirect", destination: `/login${next}` };
