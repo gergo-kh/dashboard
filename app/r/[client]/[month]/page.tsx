@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
   BarChart3,
@@ -8,7 +9,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  FileText,
   History,
   Layers,
   Megaphone,
@@ -19,6 +19,7 @@ import {
   ShoppingCart,
   Target,
   TrendingUp,
+  Users,
   Wallet
 } from "lucide-react";
 
@@ -43,6 +44,12 @@ type Campaign = {
   roas: number;
 };
 
+type ActivityEntry = {
+  name?: string;
+  label?: string;
+  count: number;
+};
+
 function asObject(value: Json): MetricObject {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as MetricObject)
@@ -56,6 +63,22 @@ function asNumber(value: unknown, fallback = 0) {
 
 function asText(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
+}
+
+function asActivityEntries(value: unknown): ActivityEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      const row = item && typeof item === "object" && !Array.isArray(item)
+        ? (item as MetricObject)
+        : {};
+      return {
+        name: asText(row.name),
+        label: asText(row.label),
+        count: asNumber(row.count)
+      };
+    })
+    .filter((item) => item.count > 0);
 }
 
 function getNestedNumber(object: MetricObject, path: string[], fallback = 0) {
@@ -212,11 +235,24 @@ export default async function ClientReportPage({ params }: PageProps) {
   const combined = asObject(report.combined);
   const meta = asObject(report.meta);
   const google = asObject(report.google);
+  const accountActivity = asObject(report.account_activity);
+  const metaActivity = asObject(accountActivity.meta as Json);
+  const googleActivity = asObject(accountActivity.google as Json);
   const metaPrevious = asObject(meta.previous as Json);
   const googlePrevious = asObject(google.previous as Json);
   const metaChange = asObject(meta.change_pct as Json);
   const googleChange = asObject(google.change_pct as Json);
   const combinedChange = asObject(combined.change_pct as Json);
+
+  const metaActivityTotal = asNumber(metaActivity.total);
+  const googleActivityTotal = asNumber(googleActivity.total);
+  const manualActivityTotal =
+    asNumber(accountActivity.total_manual_actions) || metaActivityTotal + googleActivityTotal;
+  const metaActivityActions = asActivityEntries(metaActivity.top_actions);
+  const googleActivityActions = asActivityEntries(googleActivity.top_actions);
+  const metaActivityActors = asActivityEntries(metaActivity.actors);
+  const activityNote = asText(accountActivity.note);
+  const googleActivityPartial = googleActivity.partial === true;
 
   const hasMeta =
     asNumber(meta.spend) > 0 ||
@@ -452,21 +488,61 @@ export default async function ClientReportPage({ params }: PageProps) {
 
         <section id="analysis" className="mt-4 grid scroll-mt-4 gap-4 lg:grid-cols-2">
           <Panel
-            title="Rövid összefoglaló"
-            icon={<FileText className="h-5 w-5" />}
-            iconClass="bg-emerald-50 text-emerald-600"
+            title="Fiókkezelési aktivitás"
+            icon={<Activity className="h-5 w-5" />}
+            iconClass="bg-violet-50 text-violet-600"
+            panelClass="bg-gradient-to-br from-white to-violet-50/50"
           >
-            {report.hero_title && (
-              <p className="text-base font-black leading-6 text-[#10214b]">{report.hero_title}</p>
-            )}
-            {report.hero_subtitle && (
-              <p className="mt-2 text-sm leading-6 text-slate-600">{report.hero_subtitle}</p>
-            )}
-            {analysis.yoy.combined.comparable && analysis.yoy.combined.valuePct !== null && (
-              <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
-                Év/év alapon az attribútált érték{" "}
-                <strong>{formatPct(analysis.yoy.combined.valuePct)}</strong> változott, a ROAS pedig{" "}
-                <strong>{formatPct(analysis.yoy.combined.roasPct ?? 0)}</strong>.
+            {manualActivityTotal > 0 ? (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  <ActivityStat label="Összes művelet" value={manualActivityTotal} emphasis />
+                  <ActivityStat label="Meta" value={metaActivityTotal} />
+                  <ActivityStat
+                    label={googleActivityPartial ? "Google*" : "Google"}
+                    value={googleActivityTotal}
+                  />
+                </div>
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  {metaActivityActions.length > 0 && (
+                    <ActivityActions
+                      title="Meta"
+                      badgeClass="bg-blue-600 text-white"
+                      actions={metaActivityActions.slice(0, 4)}
+                    />
+                  )}
+                  {googleActivityActions.length > 0 && (
+                    <ActivityActions
+                      title="Google"
+                      badgeClass="bg-white text-blue-600 ring-1 ring-slate-200"
+                      actions={googleActivityActions.slice(0, 4)}
+                    />
+                  )}
+                </div>
+
+                {metaActivityActors.length > 0 && (
+                  <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-white/80 px-3 py-2.5 ring-1 ring-violet-100">
+                    <Users className="h-4 w-4 text-violet-500" />
+                    <span className="text-xs font-bold text-slate-500">Közreműködők:</span>
+                    {metaActivityActors.map((actor) => (
+                      <span
+                        key={actor.name}
+                        className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700"
+                      >
+                        {actor.name}: {actor.count}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {activityNote && (
+                  <p className="mt-3 text-[11px] leading-5 text-slate-400">{activityNote}</p>
+                )}
+              </>
+            ) : (
+              <div className="rounded-xl bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+                Ehhez a hónaphoz még nincs részletes fiókkezelési aktivitás betöltve.
               </div>
             )}
           </Panel>
@@ -821,6 +897,64 @@ function Delta({
         {value === null ? "—" : formatPct(value)}
       </div>
       <div className="mt-0.5 text-[11px] font-medium text-slate-400">{label}</div>
+    </div>
+  );
+}
+
+function ActivityStat({
+  label,
+  value,
+  emphasis = false
+}: {
+  label: string;
+  value: number;
+  emphasis?: boolean;
+}) {
+  return (
+    <div
+      className={
+        emphasis
+          ? "rounded-xl bg-[#15284d] px-3 py-3 text-white"
+          : "rounded-xl bg-white px-3 py-3 ring-1 ring-slate-200"
+      }
+    >
+      <div className={`text-2xl font-black ${emphasis ? "text-white" : "text-[#0b1739]"}`}>
+        {new Intl.NumberFormat("hu-HU").format(value)}
+      </div>
+      <div className={`mt-0.5 text-[11px] font-bold ${emphasis ? "text-blue-100" : "text-slate-400"}`}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function ActivityActions({
+  title,
+  badgeClass,
+  actions
+}: {
+  title: string;
+  badgeClass: string;
+  actions: ActivityEntry[];
+}) {
+  return (
+    <div className="rounded-xl bg-white/80 p-3 ring-1 ring-slate-200/80">
+      <div className="mb-2 flex items-center gap-2">
+        <span
+          className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-black ${badgeClass}`}
+        >
+          {title.charAt(0)}
+        </span>
+        <span className="text-xs font-black text-[#10214b]">{title}</span>
+      </div>
+      <div className="space-y-2">
+        {actions.map((action) => (
+          <div key={action.label} className="flex items-start justify-between gap-3 text-xs">
+            <span className="leading-4 text-slate-600">{action.label}</span>
+            <span className="shrink-0 font-black text-[#10214b]">{action.count}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
