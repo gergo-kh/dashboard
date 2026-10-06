@@ -12,7 +12,7 @@ const publicRoutes = new Set([
 ]);
 
 function isPublicRoute(pathname: string) {
-  return publicRoutes.has(pathname) || pathname === "/r" || pathname.startsWith("/r/");
+  return publicRoutes.has(pathname) || pathname === "/s" || pathname.startsWith("/s/");
 }
 
 export type AuthRouteDecisionInput = {
@@ -82,6 +82,31 @@ export async function updateSession(request: NextRequest) {
       }
     }
   );
+
+  if (request.nextUrl.pathname.startsWith("/s/")) {
+    const segments = request.nextUrl.pathname.split("/").filter(Boolean);
+    const token = segments[1] ?? "";
+    const requestedMonth = segments[2] ?? null;
+    const validToken = /^[a-f0-9]{64}$/.test(token);
+    const validMonth = requestedMonth === null || /^\d{4}-\d{2}$/.test(requestedMonth);
+
+    if (validToken && validMonth) {
+      const { data: share } = await supabase.rpc("resolve_client_report_share", {
+        p_token: token,
+        p_month: requestedMonth
+      });
+      const resolved = share?.[0];
+
+      if (resolved) {
+        const rewriteUrl = request.nextUrl.clone();
+        rewriteUrl.pathname = `/r/${resolved.client_slug}/${resolved.report_month}`;
+        rewriteUrl.searchParams.set("share_token", token);
+        return NextResponse.rewrite(rewriteUrl);
+      }
+    }
+
+    return response;
+  }
 
   const { data: claimsData } = await supabase.auth.getClaims();
 
