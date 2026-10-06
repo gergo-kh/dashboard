@@ -330,6 +330,12 @@ export default async function ClientReportPage({ params }: PageProps) {
   const actionYoy = analysis.yoy.combined.comparable
     ? pctChange(currentActions, priorActions)
     : null;
+  const metaActionYoy = analysis.yoy.meta.comparable
+    ? pctChange(metaPurchases, asNumber(priorMeta.purchases))
+    : null;
+  const googleActionYoy = analysis.yoy.google.comparable
+    ? pctChange(googleConversions, asNumber(priorGoogle.conversions))
+    : null;
 
   const allMonths = (archive ?? [])
     .map((item) => item.report_month)
@@ -570,6 +576,73 @@ export default async function ClientReportPage({ params }: PageProps) {
           </div>
         </section>
 
+        <section
+          className={`mt-4 grid gap-4 ${hasMeta && hasGoogle ? "lg:grid-cols-2" : "grid-cols-1"}`}
+        >
+          {hasMeta && (
+            <PlatformCard
+              id="meta"
+              brand="Meta"
+              badge="M"
+              badgeClass="bg-blue-600 text-white"
+              spend={metaSpend}
+              revenue={metaRevenue}
+              roas={metaRoas}
+              actions={metaPurchases}
+              actionLabel="Vásárlások"
+              changes={{
+                spend: {
+                  mom: getNestedNumber(metaChange, ["spend"]),
+                  yoy: analysis.yoy.meta.spendPct
+                },
+                revenue: {
+                  mom: getNestedNumber(metaChange, ["revenue"]),
+                  yoy: analysis.yoy.meta.valuePct
+                },
+                roas: {
+                  mom: getNestedNumber(metaChange, ["roas"]),
+                  yoy: analysis.yoy.meta.roasPct
+                },
+                actions: {
+                  mom: getNestedNumber(metaChange, ["purchases"]),
+                  yoy: metaActionYoy
+                }
+              }}
+            />
+          )}
+          {hasGoogle && (
+            <PlatformCard
+              id="google"
+              brand="Google"
+              badge="G"
+              badgeClass="bg-white text-blue-600 ring-1 ring-slate-200"
+              spend={googleSpend}
+              revenue={googleRevenue}
+              roas={googleRoas}
+              actions={googleConversions}
+              actionLabel="Konverziók"
+              changes={{
+                spend: {
+                  mom: getNestedNumber(googleChange, ["spend"]),
+                  yoy: analysis.yoy.google.spendPct
+                },
+                revenue: {
+                  mom: getNestedNumber(googleChange, ["revenue"]),
+                  yoy: analysis.yoy.google.valuePct
+                },
+                roas: {
+                  mom: getNestedNumber(googleChange, ["roas"]),
+                  yoy: analysis.yoy.google.roasPct
+                },
+                actions: {
+                  mom: getNestedNumber(googleChange, ["conversions"]),
+                  yoy: googleActionYoy
+                }
+              }}
+            />
+          )}
+        </section>
+
         <section id="analysis" className="mt-4 grid scroll-mt-4 gap-4 lg:grid-cols-2">
           <Panel
             title="Fiókkezelési aktivitás"
@@ -733,48 +806,6 @@ export default async function ClientReportPage({ params }: PageProps) {
           </div>
         </section>
 
-        <section
-          className={`mt-4 grid gap-4 ${hasMeta && hasGoogle ? "lg:grid-cols-2" : "grid-cols-1"}`}
-        >
-          {hasMeta && (
-            <PlatformCard
-              id="meta"
-              brand="Meta"
-              badge="M"
-              badgeClass="bg-blue-600 text-white"
-              spend={metaSpend}
-              revenue={metaRevenue}
-              roas={metaRoas}
-              actions={metaPurchases}
-              actionLabel="Vásárlások"
-              changes={{
-                spend: getNestedNumber(metaChange, ["spend"]),
-                revenue: getNestedNumber(metaChange, ["revenue"]),
-                roas: getNestedNumber(metaChange, ["roas"]),
-                actions: getNestedNumber(metaChange, ["purchases"])
-              }}
-            />
-          )}
-          {hasGoogle && (
-            <PlatformCard
-              id="google"
-              brand="Google"
-              badge="G"
-              badgeClass="bg-white text-blue-600 ring-1 ring-slate-200"
-              spend={googleSpend}
-              revenue={googleRevenue}
-              roas={googleRoas}
-              actions={googleConversions}
-              actionLabel="Konverziók"
-              changes={{
-                spend: getNestedNumber(googleChange, ["spend"]),
-                revenue: getNestedNumber(googleChange, ["revenue"]),
-                roas: getNestedNumber(googleChange, ["roas"]),
-                actions: getNestedNumber(googleChange, ["conversions"])
-              }}
-            />
-          )}
-        </section>
 
         <section id="trends" className="mt-4 grid scroll-mt-4 gap-4 xl:grid-cols-[1.15fr_.85fr]">
           <Panel
@@ -1163,10 +1194,10 @@ function PlatformCard({
   actions: number;
   actionLabel: string;
   changes: {
-    spend: number;
-    revenue: number;
-    roas: number;
-    actions: number;
+    spend: { mom: number | null; yoy: number | null };
+    revenue: { mom: number | null; yoy: number | null };
+    roas: { mom: number | null; yoy: number | null };
+    actions: { mom: number | null; yoy: number | null };
   };
 }) {
   const metrics = [
@@ -1195,7 +1226,7 @@ function PlatformCard({
         </a>
       </div>
 
-      <div className="grid grid-cols-2 gap-y-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-y-5 sm:grid-cols-4">
         {metrics.map(([label, value, change], index) => (
           <div
             key={label}
@@ -1203,9 +1234,9 @@ function PlatformCard({
           >
             <div className="text-xs font-semibold text-slate-400">{label}</div>
             <div className="mt-1 text-lg font-black text-[#0b1739]">{value}</div>
-            <div className={`mt-1 text-xs font-black ${goodDelta(change) === "good" ? "text-emerald-600" : goodDelta(change) === "bad" ? "text-red-500" : "text-slate-400"}`}>
-              {formatPct(change)}
-              <span className="ml-1 font-medium text-slate-400">hó/hó</span>
+            <div className="mt-2 grid grid-cols-2 divide-x divide-slate-100">
+              <Delta value={change.mom} label="hó/hó" />
+              <Delta value={change.yoy} label="év/év" />
             </div>
           </div>
         ))}
