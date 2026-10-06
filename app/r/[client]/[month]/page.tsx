@@ -105,11 +105,18 @@ function deltaClass(value: number, lowerIsBetter = false) {
   return good ? "text-emerald-700" : "text-red-700";
 }
 
+function percentChange(current: number, previous: number) {
+  if (previous === 0) return null;
+  return ((current - previous) / previous) * 100;
+}
+
 export default async function ClientReportPage({ params }: PageProps) {
   const { client, month } = await params;
   const supabase = await createServerSupabaseClient();
+  const [reportYear, reportMonthNumber] = month.split("-").map(Number);
+  const priorYearMonth = `${reportYear - 1}-${String(reportMonthNumber).padStart(2, "0")}`;
 
-  const [{ data: report, error }, { data: archive }] = await Promise.all([
+  const [{ data: report, error }, { data: archive }, { data: priorYearReport }] = await Promise.all([
     supabase
       .from("client_reports")
       .select("*")
@@ -120,7 +127,13 @@ export default async function ClientReportPage({ params }: PageProps) {
       .from("client_reports")
       .select("report_month")
       .eq("client_slug", client)
-      .order("report_month", { ascending: false })
+      .order("report_month", { ascending: false }),
+    supabase
+      .from("client_reports")
+      .select("report_month, combined, meta, google")
+      .eq("client_slug", client)
+      .eq("report_month", priorYearMonth)
+      .maybeSingle()
   ]);
 
   if (error || !report) {
@@ -130,6 +143,9 @@ export default async function ClientReportPage({ params }: PageProps) {
   const combined = asObject(report.combined);
   const meta = asObject(report.meta);
   const google = asObject(report.google);
+  const priorCombined = priorYearReport ? asObject(priorYearReport.combined) : {};
+  const priorMeta = priorYearReport ? asObject(priorYearReport.meta) : {};
+  const priorGoogle = priorYearReport ? asObject(priorYearReport.google) : {};
   const hasMeta = Object.keys(meta).length > 0;
   const hasGoogle = Object.keys(google).length > 0;
   const platformLabel = hasMeta && hasGoogle ? "Meta Ads + Google Ads" : hasMeta ? "Meta Ads" : "Google Ads";
@@ -179,6 +195,15 @@ export default async function ClientReportPage({ params }: PageProps) {
   const archivedMonths = (archive ?? [])
     .map((item) => item.report_month)
     .filter((item) => item !== month);
+
+  const priorTotalSpend = asNumber(priorCombined.spend);
+  const priorTotalRevenue = asNumber(priorCombined.attributed_value);
+  const priorTotalRoas = asNumber(priorCombined.roas);
+  const yoySpend = priorYearReport ? percentChange(totalSpend, priorTotalSpend) : null;
+  const yoyRevenue = priorYearReport ? percentChange(totalRevenue, priorTotalRevenue) : null;
+  const yoyRoas = priorYearReport ? percentChange(totalRoas, priorTotalRoas) : null;
+  const priorMetaRoas = asNumber(priorMeta.roas);
+  const priorGoogleRoas = asNumber(priorGoogle.roas);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 print:bg-white">
@@ -268,6 +293,59 @@ export default async function ClientReportPage({ params }: PageProps) {
             />
           )}
         </section>
+
+        {priorYearReport && (
+          <section className="mt-6">
+            <div className="mb-3 flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
+              <div>
+                <h2 className="text-xl font-black">Év/év összehasonlítás</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {formatMonthLabel(priorYearReport.report_month)} → {formatMonthLabel(report.report_month)}
+                </p>
+              </div>
+              <a
+                href={`/r/${client}/${priorYearReport.report_month}`}
+                className="text-sm font-bold text-slate-600 hover:text-slate-950"
+              >
+                Tavalyi riport megnyitása →
+              </a>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <YoyCard
+                label="Hirdetési költés"
+                current={formatHuf(totalSpend)}
+                previous={formatHuf(priorTotalSpend)}
+                change={yoySpend}
+              />
+              <YoyCard
+                label="Attribútált bevétel"
+                current={formatHuf(totalRevenue)}
+                previous={formatHuf(priorTotalRevenue)}
+                change={yoyRevenue}
+              />
+              <YoyCard
+                label="Összesített ROAS"
+                current={formatDecimal(totalRoas) + "×"}
+                previous={formatDecimal(priorTotalRoas) + "×"}
+                change={yoyRoas}
+              />
+            </div>
+            {(priorMetaRoas > 0 || priorGoogleRoas > 0) && (
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+                {priorMetaRoas > 0 && metaRoas > 0 && (
+                  <span className="rounded-full bg-white px-3 py-2 ring-1 ring-slate-200">
+                    Meta ROAS: {formatDecimal(priorMetaRoas)}× → {formatDecimal(metaRoas)}×
+                  </span>
+                )}
+                {priorGoogleRoas > 0 && googleRoas > 0 && (
+                  <span className="rounded-full bg-white px-3 py-2 ring-1 ring-slate-200">
+                    Google ROAS: {formatDecimal(priorGoogleRoas)}× → {formatDecimal(googleRoas)}×
+                  </span>
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="mt-6 grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -408,6 +486,29 @@ function KpiCard({
       <div className="text-sm font-semibold text-slate-500">{label}</div>
       <div className="mt-2 text-3xl font-black tracking-tight">{value}</div>
       <div className={`mt-1 text-sm font-bold ${deltaClass}`}>{delta}</div>
+    </div>
+  );
+}
+
+function YoyCard({
+  label,
+  current,
+  previous,
+  change
+}: {
+  label: string;
+  current: string;
+  previous: string;
+  change: number | null;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+      <div className="text-sm font-semibold text-slate-500">{label}</div>
+      <div className="mt-2 text-2xl font-black tracking-tight">{current}</div>
+      <div className="mt-1 text-xs text-slate-500">tavaly: {previous}</div>
+      <div className={`mt-2 text-sm font-bold ${change === null ? "text-slate-500" : deltaClass(change)}`}>
+        {change === null ? "nincs összehasonlítható bázis" : `${formatPct(change)} év/év`}
+      </div>
     </div>
   );
 }
