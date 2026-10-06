@@ -139,6 +139,8 @@ export type Database = {
           campaigns: Json;
           analysis_context: Json;
           account_activity: Json;
+          next_month_expectation: string | null;
+          client_request: string | null;
           monthly_summary: string | null;
           what_went_well: string | null;
           google_improvements: string | null;
@@ -164,6 +166,8 @@ export type Database = {
           campaigns?: Json;
           analysis_context?: Json;
           account_activity?: Json;
+          next_month_expectation?: string | null;
+          client_request?: string | null;
           monthly_summary?: string | null;
           what_went_well?: string | null;
           google_improvements?: string | null;
@@ -189,6 +193,8 @@ export type Database = {
           campaigns?: Json;
           analysis_context?: Json;
           account_activity?: Json;
+          next_month_expectation?: string | null;
+          client_request?: string | null;
           monthly_summary?: string | null;
           what_went_well?: string | null;
           google_improvements?: string | null;
