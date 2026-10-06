@@ -130,6 +130,9 @@ export default async function ClientReportPage({ params }: PageProps) {
   const combined = asObject(report.combined);
   const meta = asObject(report.meta);
   const google = asObject(report.google);
+  const hasMeta = Object.keys(meta).length > 0;
+  const hasGoogle = Object.keys(google).length > 0;
+  const platformLabel = hasMeta && hasGoogle ? "Meta Ads + Google Ads" : hasMeta ? "Meta Ads" : "Google Ads";
   const metaPrevious = asObject(meta.previous as Json);
   const googlePrevious = asObject(google.previous as Json);
   const metaChange = asObject(meta.change_pct as Json);
@@ -195,7 +198,7 @@ export default async function ClientReportPage({ params }: PageProps) {
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700">
-              Meta Ads + Google Ads
+              {platformLabel}
             </div>
             <PrintButton />
           </div>
@@ -235,31 +238,35 @@ export default async function ClientReportPage({ params }: PageProps) {
           </section>
         )}
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-2">
-          <PlatformCard
-            title="Meta Ads"
-            metrics={[
-              ["Költés", formatHuf(metaSpend), getNestedNumber(metaChange, ["spend"]), false],
-              ["Bevétel", formatMillions(metaRevenue), getNestedNumber(metaChange, ["revenue"]), false],
-              ["ROAS", formatDecimal(metaRoas) + "×", getNestedNumber(metaChange, ["roas"]), false],
-              ["Vásárlás", formatDecimal(metaPurchases, 0), getNestedNumber(metaChange, ["purchases"]), false],
-              ["CPA", formatHuf(metaCpa), getNestedNumber(metaChange, ["cpa"]), true],
-              ["CTR", formatDecimal(metaCtr) + "%", null, false]
-            ]}
-            ctrPrevious={getNestedNumber(metaPrevious, ["ctr_pct"], 0)}
-          />
-          <PlatformCard
-            title="Google Ads"
-            metrics={[
-              ["Költés", formatHuf(googleSpend), getNestedNumber(googleChange, ["spend"]), false],
-              ["Konv. érték", formatMillions(googleRevenue), getNestedNumber(googleChange, ["revenue"]), false],
-              ["ROAS", formatDecimal(googleRoas) + "×", getNestedNumber(googleChange, ["roas"]), false],
-              ["Konverzió", formatDecimal(googleConversions, 1), getNestedNumber(googleChange, ["conversions"]), false],
-              ["CPA", formatHuf(googleCpa), getNestedNumber(googleChange, ["cpa"]), true],
-              ["CTR", formatDecimal(googleCtr) + "%", null, false]
-            ]}
-            ctrPrevious={getNestedNumber(googlePrevious, ["ctr_pct"], 0)}
-          />
+        <section className={`mt-6 grid gap-4 ${hasMeta && hasGoogle ? "lg:grid-cols-2" : "grid-cols-1"}`}>
+          {hasMeta && (
+            <PlatformCard
+              title="Meta Ads"
+              metrics={[
+                ["Költés", formatHuf(metaSpend), getNestedNumber(metaChange, ["spend"]), false],
+                ["Bevétel", formatMillions(metaRevenue), getNestedNumber(metaChange, ["revenue"]), false],
+                ["ROAS", formatDecimal(metaRoas) + "×", getNestedNumber(metaChange, ["roas"]), false],
+                ["Vásárlás", formatDecimal(metaPurchases, 0), getNestedNumber(metaChange, ["purchases"]), false],
+                ["CPA", formatHuf(metaCpa), getNestedNumber(metaChange, ["cpa"]), true],
+                ["CTR", formatDecimal(metaCtr) + "%", null, false]
+              ]}
+              ctrPrevious={getNestedNumber(metaPrevious, ["ctr_pct"], 0)}
+            />
+          )}
+          {hasGoogle && (
+            <PlatformCard
+              title="Google Ads"
+              metrics={[
+                ["Költés", formatHuf(googleSpend), getNestedNumber(googleChange, ["spend"]), false],
+                ["Konv. érték", formatMillions(googleRevenue), getNestedNumber(googleChange, ["revenue"]), false],
+                ["ROAS", formatDecimal(googleRoas) + "×", getNestedNumber(googleChange, ["roas"]), false],
+                ["Konverzió", formatDecimal(googleConversions, 1), getNestedNumber(googleChange, ["conversions"]), false],
+                ["CPA", formatHuf(googleCpa), getNestedNumber(googleChange, ["cpa"]), true],
+                ["CTR", formatDecimal(googleCtr) + "%", null, false]
+              ]}
+              ctrPrevious={getNestedNumber(googlePrevious, ["ctr_pct"], 0)}
+            />
+          )}
         </section>
 
         <section className="mt-6 grid gap-4 lg:grid-cols-2">
