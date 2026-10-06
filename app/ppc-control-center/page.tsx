@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   BarChart3,
   CircleDollarSign,
+  FileText,
   RefreshCw,
   Target,
   UsersRound,
@@ -274,6 +275,12 @@ export default async function PpcControlCenterPage({ searchParams }: PageProps) 
               <span className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-3 font-semibold">
                 <BarChart3 size={18} /> Áttekintés
               </span>
+              <Link
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-white/70 no-underline hover:bg-white/5"
+                href="/ppc-control-center/reports"
+              >
+                <FileText size={18} /> Riportok
+              </Link>
               <Link className="flex items-center gap-3 rounded-xl px-4 py-3 text-white/70 no-underline hover:bg-white/5" href="/">
                 <UsersRound size={18} /> Ügyfélportál
               </Link>
