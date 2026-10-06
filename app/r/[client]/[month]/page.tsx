@@ -433,23 +433,23 @@ export default async function ClientReportPage({ params }: PageProps) {
   if (historicalNextValuePct !== null) {
     if (historicalNextValuePct >= 10) {
       automaticExpectation =
-        `A tavalyi azonos hónapváltás erősödő ${nextMonthLabel}t mutatott: az attribútált érték ${formatPct(historicalNextValuePct)} változott${historicalNextRoasPct !== null ? `, a ROAS pedig ${formatPct(historicalNextRoasPct)}` : ""}. Ez történeti támpont, nem automatikus előrejelzés; a skálázást továbbra is a megtérülés megtartásához igazítjuk.`;
+        `A tavalyi azonos hónapváltás alapján ${nextMonthLabel} erősödést hozott: az attribútált érték ${formatPct(historicalNextValuePct)} változott${historicalNextRoasPct !== null ? `, a ROAS pedig ${formatPct(historicalNextRoasPct)}` : ""}. Ez történeti támpont, nem automatikus előrejelzés; a skálázást továbbra is a megtérülés megtartásához igazítjuk.`;
     } else if (historicalNextValuePct <= -10) {
       automaticExpectation =
-        `A tavalyi azonos hónapváltás alapján ${nextMonthLabel} visszafogottabb időszak volt: az attribútált érték ${formatPct(historicalNextValuePct)} változott. Emiatt óvatosabb volumennel tervezünk, és elsődlegesen a hatékonyság megtartására figyelünk.`;
+        `A tavalyi azonos hónapváltás alapján ${nextMonthLabel} visszafogottabb időszakot hozott: az attribútált érték ${formatPct(historicalNextValuePct)} változott. Emiatt óvatosabb volumennel tervezünk, és elsődlegesen a hatékonyság megtartására figyelünk.`;
     } else {
       automaticExpectation =
-        `A tavalyi azonos hónapváltás viszonylag stabil ${nextMonthLabel}t mutatott: az attribútált érték ${formatPct(historicalNextValuePct)} változott. Hasonlóan kontrollált hónappal számolunk, a költést a tényleges teljesítményhez igazítva.`;
+        `A tavalyi azonos hónapváltás alapján ${nextMonthLabel} viszonylag stabil volt: az attribútált érték ${formatPct(historicalNextValuePct)} változott. Hasonlóan kontrollált hónappal számolunk, a költést a tényleges teljesítményhez igazítva.`;
     }
   } else if ((analysis.mom.valuePct ?? 0) >= 10 && (analysis.mom.roasPct ?? 0) >= -5) {
     automaticExpectation =
-      `Az aktuális trend alapján pozitív lendülettel fordulunk ${nextMonthLabel}ba. A volumen további növelését kontrolláltan, a megtérülés megtartása mellett folytatjuk.`;
+      `Az aktuális trend alapján pozitív lendülettel fordulunk a következő hónapra. A volumen további növelését kontrolláltan, a megtérülés megtartása mellett folytatjuk.`;
   } else if ((analysis.mom.valuePct ?? 0) <= -10) {
     automaticExpectation =
-      `Az aktuális trend alapján óvatosabb ${nextMonthLabel}ra készülünk. A fókusz a hatékonyság stabilizálásán és a jól teljesítő területek védelmén lesz.`;
+      `Az aktuális trend alapján óvatosabb következő hónapra készülünk. A fókusz a hatékonyság stabilizálásán és a jól teljesítő területek védelmén lesz.`;
   } else {
     automaticExpectation =
-      `Az aktuális trend alapján stabil ${nextMonthLabel}ra készülünk. A költést és a volument fokozatosan, a megtérüléshez igazítva alakítjuk.`;
+      `Az aktuális trend alapján stabil következő hónapra készülünk. A költést és a volument fokozatosan, a megtérüléshez igazítva alakítjuk.`;
   }
 
   const nextMonthExpectation = expectationOverride || automaticExpectation;
