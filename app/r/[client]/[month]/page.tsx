@@ -19,7 +19,6 @@ import {
   ShoppingCart,
   Target,
   TrendingUp,
-  Users,
   Wallet
 } from "lucide-react";
 
@@ -250,7 +249,6 @@ export default async function ClientReportPage({ params }: PageProps) {
     asNumber(accountActivity.total_manual_actions) || metaActivityTotal + googleActivityTotal;
   const metaActivityActions = asActivityEntries(metaActivity.top_actions);
   const googleActivityActions = asActivityEntries(googleActivity.top_actions);
-  const metaActivityActors = asActivityEntries(metaActivity.actors);
   const activityNote = asText(accountActivity.note);
   const googleActivityPartial = googleActivity.partial === true;
 
@@ -520,21 +518,6 @@ export default async function ClientReportPage({ params }: PageProps) {
                     />
                   )}
                 </div>
-
-                {metaActivityActors.length > 0 && (
-                  <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-white/80 px-3 py-2.5 ring-1 ring-violet-100">
-                    <Users className="h-4 w-4 text-violet-500" />
-                    <span className="text-xs font-bold text-slate-500">Közreműködők:</span>
-                    {metaActivityActors.map((actor) => (
-                      <span
-                        key={actor.name}
-                        className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700"
-                      >
-                        {actor.name}: {actor.count}
-                      </span>
-                    ))}
-                  </div>
-                )}
 
                 {activityNote && (
                   <p className="mt-3 text-[11px] leading-5 text-slate-400">{activityNote}</p>
