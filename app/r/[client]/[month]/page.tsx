@@ -10,11 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   History,
-  Layers,
-  Megaphone,
-  RefreshCw,
   Rocket,
-  Search,
   Settings,
   ShoppingCart,
   Target,
@@ -339,36 +335,22 @@ export default async function ClientReportPage({ params }: PageProps) {
     ...sentences(report.facebook_improvements)
   ];
 
-  const focusItems = [
-    ...(hasMeta
-      ? [
-          {
-            title: "Új kreatívok tesztelése",
-            subtitle: "nyerő irányok új változatai",
-            icon: <Megaphone className="h-5 w-5" />
-          },
-          {
-            title: "Nyerők iterálása",
-            subtitle: "gyenge hirdetések gyors lekapcsolása",
-            icon: <RefreshCw className="h-5 w-5" />
-          }
-        ]
-      : []),
-    ...(hasGoogle
-      ? [
-          {
-            title: "Termékoptimalizálás",
-            subtitle: "keret a jobban termelő termékekre",
-            icon: <Layers className="h-5 w-5" />
-          },
-          {
-            title: "Kulcsszóoptimalizálás",
-            subtitle: "gyenge keresések kiszűrése",
-            icon: <Search className="h-5 w-5" />
-          }
-        ]
-      : [])
-  ].slice(0, 4);
+  const googleWorkflowItems = [
+    "Stratégia és kampánystruktúra felülvizsgálata",
+    "Shopping termékoptimalizálás",
+    "PMax szövegek és bannerek frissítése",
+    "Kulcsszavak és keresési kifejezések optimalizálása",
+    "Célcsoportok és jelek finomhangolása",
+    "Ügyféllisták feltöltése és frissítése"
+  ];
+
+  const metaWorkflowItems = [
+    "Jól teljesítő hirdetések skálázása",
+    "Gyenge hirdetések kivezetése",
+    "Fiókstruktúra hatékonyságának növelése",
+    "Célcsoportok optimalizálása",
+    "Ügyféllisták feltöltése és frissítése"
+  ];
 
   return (
     <main className="min-h-screen bg-[#f6f9fc] text-[#0d1b3e] print:bg-white">
@@ -573,25 +555,37 @@ export default async function ClientReportPage({ params }: PageProps) {
           </Panel>
         </section>
 
-        {focusItems.length > 0 && (
-          <section className="mt-4 rounded-[22px] border border-violet-100 bg-gradient-to-r from-[#faf8ff] to-[#f6f2ff] p-4 shadow-[0_10px_30px_rgba(124,58,237,0.05)]">
-            <div className="mb-3 flex items-center gap-2 text-violet-700">
-              <Rocket className="h-5 w-5" />
-              <h2 className="text-lg font-black">Következő havi fókusz</h2>
+        {(hasGoogle || hasMeta) && (
+          <section className="mt-4 rounded-[22px] border border-violet-100 bg-gradient-to-r from-[#faf8ff] to-[#f7f5ff] p-5 shadow-[0_10px_30px_rgba(124,58,237,0.045)]">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="rounded-xl bg-violet-100 p-2 text-violet-600">
+                <Rocket className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-[#0b1739]">Min dolgozunk most?</h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  A fiók folyamatos optimalizálásának fő területei.
+                </p>
+              </div>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              {focusItems.map((item) => (
-                <div
-                  key={item.title}
-                  className="flex items-center gap-3 rounded-xl bg-white/70 px-4 py-3 ring-1 ring-violet-100"
-                >
-                  <div className="rounded-lg bg-violet-100 p-2 text-violet-600">{item.icon}</div>
-                  <div>
-                    <div className="text-sm font-black text-[#10214b]">{item.title}</div>
-                    <div className="mt-0.5 text-xs leading-4 text-slate-500">{item.subtitle}</div>
-                  </div>
-                </div>
-              ))}
+
+            <div className={`grid gap-4 ${hasGoogle && hasMeta ? "lg:grid-cols-2" : "grid-cols-1"}`}>
+              {hasGoogle && (
+                <WorkflowCard
+                  title="Google Ads"
+                  badge="G"
+                  badgeClass="bg-white text-blue-600 ring-1 ring-slate-200"
+                  items={googleWorkflowItems}
+                />
+              )}
+              {hasMeta && (
+                <WorkflowCard
+                  title="Meta Ads"
+                  badge="M"
+                  badgeClass="bg-blue-600 text-white"
+                  items={metaWorkflowItems}
+                />
+              )}
             </div>
           </section>
         )}
@@ -880,6 +874,39 @@ function Delta({
         {value === null ? "—" : formatPct(value)}
       </div>
       <div className="mt-0.5 text-[11px] font-medium text-slate-400">{label}</div>
+    </div>
+  );
+}
+
+function WorkflowCard({
+  title,
+  badge,
+  badgeClass,
+  items
+}: {
+  title: string;
+  badge: string;
+  badgeClass: string;
+  items: string[];
+}) {
+  return (
+    <div className="rounded-[18px] bg-white/85 p-4 ring-1 ring-violet-100">
+      <div className="mb-3 flex items-center gap-2.5">
+        <span
+          className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-black ${badgeClass}`}
+        >
+          {badge}
+        </span>
+        <h3 className="text-sm font-black text-[#10214b]">{title}</h3>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {items.map((item) => (
+          <div key={item} className="flex items-start gap-2 rounded-xl bg-slate-50/80 px-3 py-2.5">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+            <span className="text-xs font-semibold leading-4 text-slate-600">{item}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
