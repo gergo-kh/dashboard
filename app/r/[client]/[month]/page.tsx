@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Handshake,
   History,
   Rocket,
   Settings,
@@ -43,6 +44,13 @@ type ActivityEntry = {
   name?: string;
   label?: string;
   count: number;
+};
+
+type HistoryRow = {
+  report_month: string;
+  combined: Json;
+  meta: Json;
+  google: Json;
 };
 
 function asObject(value: Json): MetricObject {
@@ -141,6 +149,40 @@ function formatMonthLabel(reportMonth: string) {
   }).format(date);
 }
 
+function monthOffset(reportMonth: string, offset: number) {
+  const [year, month] = reportMonth.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + offset, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthName(reportMonth: string) {
+  const [year, month] = reportMonth.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, 1));
+  return new Intl.DateTimeFormat("hu-HU", {
+    month: "long",
+    timeZone: "UTC"
+  }).format(date);
+}
+
+function platformActive(value: Json) {
+  const metric = asObject(value);
+  return (
+    asNumber(metric.spend) > 0 ||
+    asNumber(metric.impressions) > 0 ||
+    asNumber(metric.revenue) > 0
+  );
+}
+
+function rowCoverage(row: HistoryRow | null | undefined) {
+  if (!row) return "none";
+  const meta = platformActive(row.meta);
+  const google = platformActive(row.google);
+  if (meta && google) return "meta+google";
+  if (meta) return "meta";
+  if (google) return "google";
+  return "none";
+}
+
 function formatShortMonth(reportMonth: string) {
   const [year, month] = reportMonth.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, 1));
@@ -210,7 +252,7 @@ export default async function ClientReportPage({ params }: PageProps) {
     notFound();
   }
 
-  const historyRows = (archive ?? []).map((item) => ({
+  const historyRows: HistoryRow[] = (archive ?? []).map((item) => ({
     report_month: item.report_month,
     combined: item.combined,
     meta: item.meta,
@@ -351,6 +393,68 @@ export default async function ClientReportPage({ params }: PageProps) {
     "Célcsoportok optimalizálása",
     "Ügyféllisták feltöltése és frissítése"
   ];
+
+  const currentHistoryRow: HistoryRow = {
+    report_month: report.report_month,
+    combined: report.combined,
+    meta: report.meta,
+    google: report.google
+  };
+  const priorYearCurrentMonth = monthOffset(report.report_month, -12);
+  const priorYearNextMonth = monthOffset(report.report_month, -11);
+  const priorYearCurrent = historyRows.find((item) => item.report_month === priorYearCurrentMonth);
+  const priorYearNext = historyRows.find((item) => item.report_month === priorYearNextMonth);
+  const currentCoverage = rowCoverage(currentHistoryRow);
+  const historicalTransitionComparable =
+    Boolean(priorYearCurrent && priorYearNext) &&
+    currentCoverage !== "none" &&
+    rowCoverage(priorYearCurrent) === currentCoverage &&
+    rowCoverage(priorYearNext) === currentCoverage;
+
+  const priorYearCurrentCombined = priorYearCurrent ? asObject(priorYearCurrent.combined) : {};
+  const priorYearNextCombined = priorYearNext ? asObject(priorYearNext.combined) : {};
+  const historicalNextValuePct = historicalTransitionComparable
+    ? pctChange(
+        asNumber(priorYearNextCombined.attributed_value),
+        asNumber(priorYearCurrentCombined.attributed_value)
+      )
+    : null;
+  const historicalNextRoasPct = historicalTransitionComparable
+    ? pctChange(
+        asNumber(priorYearNextCombined.roas),
+        asNumber(priorYearCurrentCombined.roas)
+      )
+    : null;
+
+  const nextMonthLabel = monthName(monthOffset(report.report_month, 1));
+  const expectationOverride = report.next_month_expectation?.trim();
+  let automaticExpectation = "";
+
+  if (historicalNextValuePct !== null) {
+    if (historicalNextValuePct >= 10) {
+      automaticExpectation =
+        `A tavalyi azonos hónapváltás erősödő ${nextMonthLabel}t mutatott: az attribútált érték ${formatPct(historicalNextValuePct)} változott${historicalNextRoasPct !== null ? `, a ROAS pedig ${formatPct(historicalNextRoasPct)}` : ""}. Ez történeti támpont, nem automatikus előrejelzés; a skálázást továbbra is a megtérülés megtartásához igazítjuk.`;
+    } else if (historicalNextValuePct <= -10) {
+      automaticExpectation =
+        `A tavalyi azonos hónapváltás alapján ${nextMonthLabel} visszafogottabb időszak volt: az attribútált érték ${formatPct(historicalNextValuePct)} változott. Emiatt óvatosabb volumennel tervezünk, és elsődlegesen a hatékonyság megtartására figyelünk.`;
+    } else {
+      automaticExpectation =
+        `A tavalyi azonos hónapváltás viszonylag stabil ${nextMonthLabel}t mutatott: az attribútált érték ${formatPct(historicalNextValuePct)} változott. Hasonlóan kontrollált hónappal számolunk, a költést a tényleges teljesítményhez igazítva.`;
+    }
+  } else if ((analysis.mom.valuePct ?? 0) >= 10 && (analysis.mom.roasPct ?? 0) >= -5) {
+    automaticExpectation =
+      `Az aktuális trend alapján pozitív lendülettel fordulunk ${nextMonthLabel}ba. A volumen további növelését kontrolláltan, a megtérülés megtartása mellett folytatjuk.`;
+  } else if ((analysis.mom.valuePct ?? 0) <= -10) {
+    automaticExpectation =
+      `Az aktuális trend alapján óvatosabb ${nextMonthLabel}ra készülünk. A fókusz a hatékonyság stabilizálásán és a jól teljesítő területek védelmén lesz.`;
+  } else {
+    automaticExpectation =
+      `Az aktuális trend alapján stabil ${nextMonthLabel}ra készülünk. A költést és a volument fokozatosan, a megtérüléshez igazítva alakítjuk.`;
+  }
+
+  const nextMonthExpectation = expectationOverride || automaticExpectation;
+  const clientRequest =
+    report.client_request?.trim() || "Jelenleg nincs szükség külön teendőre.";
 
   return (
     <main className="min-h-screen bg-[#f6f9fc] text-[#0d1b3e] print:bg-white">
@@ -589,6 +693,45 @@ export default async function ClientReportPage({ params }: PageProps) {
             </div>
           </section>
         )}
+
+        <section className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-[22px] border border-emerald-100 bg-gradient-to-br from-white to-emerald-50/60 p-5 shadow-[0_12px_36px_rgba(15,23,42,0.04)]">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="rounded-xl bg-emerald-100 p-2 text-emerald-600">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-black text-[#0b1739]">Következő havi várakozás</h2>
+            </div>
+            <p className="text-sm leading-6 text-slate-650">{nextMonthExpectation}</p>
+          </div>
+
+          <div
+            className={`rounded-[22px] border p-5 shadow-[0_12px_36px_rgba(15,23,42,0.04)] ${
+              report.client_request?.trim()
+                ? "border-amber-100 bg-gradient-to-br from-white to-amber-50/60"
+                : "border-slate-200 bg-white"
+            }`}
+          >
+            <div className="mb-3 flex items-center gap-3">
+              <div
+                className={`rounded-xl p-2 ${
+                  report.client_request?.trim()
+                    ? "bg-amber-100 text-amber-600"
+                    : "bg-emerald-50 text-emerald-600"
+                }`}
+              >
+                <Handshake className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-black text-[#0b1739]">Kell valami az ügyféltől?</h2>
+            </div>
+            <div className="flex items-start gap-2.5">
+              {!report.client_request?.trim() && (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+              )}
+              <p className="text-sm leading-6 text-slate-650">{clientRequest}</p>
+            </div>
+          </div>
+        </section>
 
         <section
           className={`mt-4 grid gap-4 ${hasMeta && hasGoogle ? "lg:grid-cols-2" : "grid-cols-1"}`}
