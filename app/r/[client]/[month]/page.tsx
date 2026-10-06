@@ -21,12 +21,21 @@ import {
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { buildReportAnalysis } from "@/lib/reports/analysis";
-import type { Json } from "@/types/database";
+import type { Database, Json } from "@/types/database";
 import { PrintButton } from "./print-button";
 import { TrendChart } from "./report-charts";
 
 type PageProps = {
   params: Promise<{ client: string; month: string }>;
+  searchParams: Promise<{ share_token?: string }>;
+};
+
+type ClientReportRow = Database["public"]["Tables"]["client_reports"]["Row"];
+type ArchiveRow = {
+  report_month: string;
+  combined: Json;
+  meta: Json;
+  google: Json;
 };
 
 type MetricObject = Record<string, unknown>;
@@ -221,14 +230,44 @@ function goodDelta(value: number | null, lowerIsBetter = false) {
   return positive ? "good" : "bad";
 }
 
-export default async function ClientReportPage({ params }: PageProps) {
+export default async function ClientReportPage({ params, searchParams }: PageProps) {
   const { client, month } = await params;
+  const { share_token: requestedShareToken } = await searchParams;
+  const shareToken =
+    requestedShareToken && /^[a-f0-9]{64}$/.test(requestedShareToken)
+      ? requestedShareToken
+      : null;
   const supabase = await createServerSupabaseClient();
   const [reportYear, reportMonthNumber] = month.split("-").map(Number);
   const priorYearMonth = `${reportYear - 1}-${String(reportMonthNumber).padStart(2, "0")}`;
 
-  const [{ data: report, error }, { data: archive }, { data: priorYearReport }] =
-    await Promise.all([
+  let report: ClientReportRow | null = null;
+  let archive: ArchiveRow[] = [];
+  let priorYearReport: ArchiveRow | null = null;
+  let loadError: unknown = null;
+
+  if (shareToken) {
+    const [{ data: sharedReport, error: sharedReportError }, { data: sharedArchive, error: sharedArchiveError }] =
+      await Promise.all([
+        supabase.rpc("get_shared_client_report", {
+          p_token: shareToken,
+          p_month: month
+        }),
+        supabase.rpc("get_shared_client_report_archive", {
+          p_token: shareToken
+        })
+      ]);
+
+    report = (sharedReport?.[0] ?? null) as unknown as ClientReportRow | null;
+    archive = (sharedArchive ?? []) as ArchiveRow[];
+    priorYearReport = archive.find((item) => item.report_month === priorYearMonth) ?? null;
+    loadError = sharedReportError ?? sharedArchiveError;
+  } else {
+    const [
+      { data: directReport, error: directReportError },
+      { data: directArchive, error: directArchiveError },
+      { data: directPriorYearReport, error: directPriorYearError }
+    ] = await Promise.all([
       supabase
         .from("client_reports")
         .select("*")
@@ -248,11 +287,20 @@ export default async function ClientReportPage({ params }: PageProps) {
         .maybeSingle()
     ]);
 
-  if (error || !report) {
+    report = directReport;
+    archive = directArchive ?? [];
+    priorYearReport = directPriorYearReport;
+    loadError = directReportError ?? directArchiveError ?? directPriorYearError;
+  }
+
+  if (loadError || !report || report.client_slug !== client) {
     notFound();
   }
 
-  const historyRows: HistoryRow[] = (archive ?? []).map((item) => ({
+  const reportHref = (targetMonth: string) =>
+    shareToken ? `/s/${shareToken}/${targetMonth}` : `/r/${client}/${targetMonth}`;
+
+  const historyRows: HistoryRow[] = archive.map((item) => ({
     report_month: item.report_month,
     combined: item.combined,
     meta: item.meta,
@@ -337,7 +385,7 @@ export default async function ClientReportPage({ params }: PageProps) {
     ? pctChange(googleConversions, asNumber(priorGoogle.conversions))
     : null;
 
-  const allMonths = (archive ?? [])
+  const allMonths = archive
     .map((item) => item.report_month)
     .filter(Boolean)
     .sort();
@@ -348,7 +396,7 @@ export default async function ClientReportPage({ params }: PageProps) {
       ? allMonths[currentIndex + 1]
       : null;
 
-  const trendData = [...(archive ?? [])]
+  const trendData = [...archive]
     .sort((a, b) => a.report_month.localeCompare(b.report_month))
     .slice(-12)
     .map((item) => {
@@ -487,7 +535,7 @@ export default async function ClientReportPage({ params }: PageProps) {
               <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
                 {previousMonth ? (
                   <a
-                    href={`/r/${client}/${previousMonth}`}
+                    href={reportHref(previousMonth)}
                     className="rounded-lg p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
                     aria-label="Előző riport"
                   >
@@ -509,7 +557,7 @@ export default async function ClientReportPage({ params }: PageProps) {
                 </div>
                 {nextMonth ? (
                   <a
-                    href={`/r/${client}/${nextMonth}`}
+                    href={reportHref(nextMonth)}
                     className="rounded-lg p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
                     aria-label="Következő riport"
                   >
@@ -934,13 +982,13 @@ export default async function ClientReportPage({ params }: PageProps) {
               <h2 className="text-base font-black">Korábbi riportok</h2>
             </div>
             <div className="flex flex-1 gap-2 overflow-x-auto lg:px-4">
-              {[...(archive ?? [])]
+              {[...archive]
                 .filter((item) => item.report_month !== month)
                 .slice(0, 10)
                 .map((item) => (
                   <a
                     key={item.report_month}
-                    href={`/r/${client}/${item.report_month}`}
+                    href={reportHref(item.report_month)}
                     className="whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-white hover:text-slate-950"
                   >
                     {formatMonthLabel(item.report_month)}
