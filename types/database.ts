@@ -121,6 +121,77 @@ export type Database = {
         };
         Relationships: [];
       };
+      client_reports: {
+        Row: {
+          id: string;
+          client_name: string;
+          client_slug: string;
+          report_month: string;
+          period_start: string;
+          period_end: string;
+          comparison_start: string | null;
+          comparison_end: string | null;
+          hero_title: string | null;
+          hero_subtitle: string | null;
+          combined: Json;
+          meta: Json;
+          google: Json;
+          campaigns: Json;
+          monthly_summary: string | null;
+          what_went_well: string | null;
+          google_improvements: string | null;
+          facebook_improvements: string | null;
+          source_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_name: string;
+          client_slug: string;
+          report_month: string;
+          period_start: string;
+          period_end: string;
+          comparison_start?: string | null;
+          comparison_end?: string | null;
+          hero_title?: string | null;
+          hero_subtitle?: string | null;
+          combined?: Json;
+          meta?: Json;
+          google?: Json;
+          campaigns?: Json;
+          monthly_summary?: string | null;
+          what_went_well?: string | null;
+          google_improvements?: string | null;
+          facebook_improvements?: string | null;
+          source_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_name?: string;
+          client_slug?: string;
+          report_month?: string;
+          period_start?: string;
+          period_end?: string;
+          comparison_start?: string | null;
+          comparison_end?: string | null;
+          hero_title?: string | null;
+          hero_subtitle?: string | null;
+          combined?: Json;
+          meta?: Json;
+          google?: Json;
+          campaigns?: Json;
+          monthly_summary?: string | null;
+          what_went_well?: string | null;
+          google_improvements?: string | null;
+          facebook_improvements?: string | null;
+          source_note?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       projects: {
         Row: {
           id: string;
@@ -346,6 +417,9 @@ export type Database = {
           period_end: string;
           summary_draft: string | null;
           summary_approved: string | null;
+          what_went_well: string | null;
+          google_improvements: string | null;
+          facebook_improvements: string | null;
           outcome_type: MonthlyOutcomeType;
           outcome_items: Json[];
           corrective_actions: Json[];
@@ -363,6 +437,9 @@ export type Database = {
           period_end: string;
           summary_draft?: string | null;
           summary_approved?: string | null;
+          what_went_well?: string | null;
+          google_improvements?: string | null;
+          facebook_improvements?: string | null;
           outcome_type?: MonthlyOutcomeType;
           outcome_items?: Json[];
           corrective_actions?: Json[];
