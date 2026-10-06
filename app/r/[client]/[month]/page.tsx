@@ -149,6 +149,9 @@ export default async function ClientReportPage({ params }: PageProps) {
   const hasMeta = Object.keys(meta).length > 0;
   const hasGoogle = Object.keys(google).length > 0;
   const platformLabel = hasMeta && hasGoogle ? "Meta Ads + Google Ads" : hasMeta ? "Meta Ads" : "Google Ads";
+  const hasStructuredSummary = Boolean(
+    report.what_went_well || report.google_improvements || report.facebook_improvements
+  );
   const metaPrevious = asObject(meta.previous as Json);
   const googlePrevious = asObject(google.previous as Json);
   const metaChange = asObject(meta.change_pct as Json);
@@ -347,48 +350,53 @@ export default async function ClientReportPage({ params }: PageProps) {
           </section>
         )}
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-2">
+        <section className={`mt-6 grid gap-4 ${hasStructuredSummary ? "lg:grid-cols-2" : "grid-cols-1"}`}>
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="mb-3 text-xl font-black">Havi értékelés + következő lépés</h2>
+            <h2 className="mb-3 text-xl font-black">
+              {hasStructuredSummary ? "Havi értékelés + következő lépés" : "Korábbi havi összefoglaló"}
+            </h2>
             <div className="space-y-2">
-              {paragraphs(report.monthly_summary).map((paragraph, index, all) => (
-                <div
-                  key={paragraph}
-                  className={
-                    index === all.length - 1
-                      ? "rounded-xl bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900"
-                      : "rounded-xl bg-slate-100 px-4 py-3 text-sm leading-6 text-slate-700"
-                  }
-                >
-                  {index === all.length - 1 && (
-                    <span className="font-black">Következő lépés: </span>
-                  )}
-                  {paragraph}
-                </div>
-              ))}
+              {paragraphs(report.monthly_summary).map((paragraph, index, all) => {
+                const isNextStep = hasStructuredSummary && index === all.length - 1;
+                return (
+                  <div
+                    key={paragraph}
+                    className={
+                      isNextStep
+                        ? "rounded-xl bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900"
+                        : "rounded-xl bg-slate-100 px-4 py-3 text-sm leading-6 text-slate-700"
+                    }
+                  >
+                    {isNextStep && <span className="font-black">Következő lépés: </span>}
+                    {paragraph}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h2 className="mb-3 text-xl font-black">⚔️ Huszár összefoglaló</h2>
-            <div className="space-y-2">
-              {report.what_went_well && (
-                <Callout className="bg-emerald-50 text-emerald-900" label="🟢 Ami jól ment:">
-                  {report.what_went_well}
-                </Callout>
-              )}
-              {report.google_improvements && (
-                <Callout className="bg-amber-50 text-amber-900" label="🟡 Amin javítunk a Google-ben:">
-                  {report.google_improvements}
-                </Callout>
-              )}
-              {report.facebook_improvements && (
-                <Callout className="bg-slate-100 text-slate-700" label="🔵 Amin javítunk a Facebookon:">
-                  {report.facebook_improvements}
-                </Callout>
-              )}
+          {hasStructuredSummary && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="mb-3 text-xl font-black">⚔️ Huszár összefoglaló</h2>
+              <div className="space-y-2">
+                {report.what_went_well && (
+                  <Callout className="bg-emerald-50 text-emerald-900" label="🟢 Ami jól ment:">
+                    {report.what_went_well}
+                  </Callout>
+                )}
+                {report.google_improvements && (
+                  <Callout className="bg-amber-50 text-amber-900" label="🟡 Amin javítunk a Google-ben:">
+                    {report.google_improvements}
+                  </Callout>
+                )}
+                {report.facebook_improvements && (
+                  <Callout className="bg-slate-100 text-slate-700" label="🔵 Amin javítunk a Facebookon:">
+                    {report.facebook_improvements}
+                  </Callout>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
         {campaignRows.length > 0 && (
