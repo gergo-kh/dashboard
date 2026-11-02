@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Ban, Check, Copy, RefreshCw } from "lucide-react";
+import { Ban, Check, Copy, Download, List, RefreshCw } from "lucide-react";
 import { regenerateReportShare, revokeReportShare } from "./actions";
 
 export function CopyShareLinkButton({
@@ -32,6 +32,73 @@ export function CopyShareLinkButton({
       {copied ? <Check size={14} /> : <Copy size={14} />}
       {copied ? "Másolva" : "Link másolása"}
     </button>
+  );
+}
+
+
+export function BulkShareLinkActions({
+  links
+}: {
+  links: Array<{ name: string; path: string; latestMonth: string }>;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  function buildRows() {
+    return links.map((item) => ({
+      ...item,
+      url: new URL(item.path, window.location.origin).toString()
+    }));
+  }
+
+  async function copyAll() {
+    const text = buildRows()
+      .map((item) => `${item.name}\t${item.url}`)
+      .join("\n");
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  function downloadCsv() {
+    const rows = buildRows();
+    const escapeCsv = (value: string) => `"${value.replaceAll('"', '""')}"`;
+    const csv = [
+      ["Ügyfél", "Legfrissebb riport", "Privát riport link"].map(escapeCsv).join(","),
+      ...rows.map((item) =>
+        [item.name, item.latestMonth, item.url].map(escapeCsv).join(",")
+      )
+    ].join("\n");
+
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "konverziohuszar-ugyfel-riport-linkek.csv";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={copyAll}
+        className="inline-flex items-center gap-2 rounded-xl bg-[var(--kh-navy)] px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
+      >
+        {copied ? <Check size={16} /> : <List size={16} />}
+        {copied ? "Lista másolva" : "Összes link másolása"}
+      </button>
+      <button
+        type="button"
+        onClick={downloadCsv}
+        className="inline-flex items-center gap-2 rounded-xl border border-[var(--kh-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--kh-navy)] transition hover:bg-slate-50"
+      >
+        <Download size={16} />
+        CSV letöltése
+      </button>
+    </div>
   );
 }
 
