@@ -56,6 +56,19 @@ export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
     request
   });
+
+  const pathname = request.nextUrl.pathname;
+  const shareToken = request.nextUrl.searchParams.get("share_token");
+
+  if (
+    isPublicRoute(pathname) ||
+    pathname === "/s" ||
+    pathname.startsWith("/s/") ||
+    (pathname.startsWith("/r/") && shareToken && /^[a-f0-9]{64}$/.test(shareToken))
+  ) {
+    return response;
+  }
+
   const env = getPublicEnv();
 
   const supabase = createServerClient<Database>(
@@ -83,32 +96,11 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  if (request.nextUrl.pathname.startsWith("/s/")) {
-    const segments = request.nextUrl.pathname.split("/").filter(Boolean);
-    const token = segments[1] ?? "";
-    const requestedMonth = segments[2] ?? null;
-    const validToken = /^[a-f0-9]{64}$/.test(token);
-    const validMonth = requestedMonth === null || /^\d{4}-\d{2}$/.test(requestedMonth);
-
-    if (validToken && validMonth) {
-      const { data: share } = await supabase.rpc("resolve_client_report_share", {
-        p_token: token,
-        p_month: requestedMonth
-      });
-      const resolved = share?.[0];
-
-      if (resolved) {
-        const rewriteUrl = request.nextUrl.clone();
-        rewriteUrl.pathname = `/r/${resolved.client_slug}/${resolved.report_month}`;
-        rewriteUrl.searchParams.set("share_token", token);
-        return NextResponse.rewrite(rewriteUrl);
-      }
-    }
-
-    return response;
-  }
-
-  const { data: claimsData } = await supabase.auth.getClaims();
+  const claimsResult = await Promise.race([
+    supabase.auth.getClaims().catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000))
+  ]);
+  const claimsData = claimsResult?.data ?? null;
 
   const decision = getAuthRouteDecision({
     pathname: request.nextUrl.pathname,
