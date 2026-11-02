@@ -16,7 +16,7 @@ export function CopyShareLinkButton({
 
   async function copyLink() {
     if (disabled) return;
-    const url = new URL(path, window.location.origin).toString();
+    const url = new URL(path, "https://riport.konverziohuszar.hu").toString();
     await navigator.clipboard.writeText(url);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
@@ -46,7 +46,7 @@ export function BulkShareLinkActions({
   function buildRows() {
     return links.map((item) => ({
       ...item,
-      url: new URL(item.path, window.location.origin).toString()
+      url: new URL(item.path, "https://riport.konverziohuszar.hu").toString()
     }));
   }
 
