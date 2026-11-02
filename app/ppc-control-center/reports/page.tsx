@@ -10,7 +10,11 @@ import {
 } from "lucide-react";
 import { requireCurrentUser } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { CopyShareLinkButton, ShareAdminActions } from "./share-controls";
+import {
+  BulkShareLinkActions,
+  CopyShareLinkButton,
+  ShareAdminActions
+} from "./share-controls";
 
 function formatMonth(reportMonth: string) {
   const [year, month] = reportMonth.split("-").map(Number);
@@ -69,6 +73,14 @@ export default async function ReportSharesPage() {
     }))
     .filter((row) => row.latestMonth !== null);
 
+  const activeLinks = rows
+    .filter((row) => row.share?.is_active && row.share?.token && row.latestMonth)
+    .map((row) => ({
+      name: row.name,
+      path: `/s/${row.share!.token}`,
+      latestMonth: row.latestMonth!
+    }));
+
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <div className="grid min-h-screen grid-cols-[220px_minmax(0,1fr)] max-[900px]:grid-cols-1">
@@ -119,9 +131,12 @@ export default async function ReportSharesPage() {
                 Privát, stabil link minden ügyfélhez. A link mindig a legfrissebb riportot nyitja meg.
               </p>
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-              <ShieldCheck size={18} />
-              {rows.filter((row) => row.share?.is_active).length} aktív privát link
+            <div className="flex flex-col items-end gap-3">
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                <ShieldCheck size={18} />
+                {rows.filter((row) => row.share?.is_active).length} aktív privát link
+              </div>
+              <BulkShareLinkActions links={activeLinks} />
             </div>
           </header>
 
