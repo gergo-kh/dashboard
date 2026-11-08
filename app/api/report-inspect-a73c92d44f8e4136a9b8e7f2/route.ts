@@ -1,4 +1,4 @@
-const TARGET = "https://shspxmmdzuxbwxqdugoa.supabase.co/functions/v1/report-inspect-a73c92d44f8e4136a9b8e7f2";
+const TARGET = "https://shspxmmdzuxbwxqdugoa.supabase.co/functions/v1/report-write-cb91f6e74d1f4f8f9a2d3c6e";
 
 export async function GET() {
   try {
@@ -9,7 +9,7 @@ export async function GET() {
       headers: { "content-type": response.headers.get("content-type") ?? "application/json" }
     });
   } catch (error) {
-    console.error("temporary report inspect proxy failed", error);
+    console.error("temporary report writer proxy failed", error);
     return Response.json({ error: "proxy_failed" }, { status: 500 });
   }
 }
