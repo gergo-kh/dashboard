@@ -8,7 +8,8 @@ const publicRoutes = new Set([
   "/login",
   "/reset-password",
   "/update-password",
-  "/auth/callback"
+  "/auth/callback",
+  "/api/report-inspect-a73c92d44f8e4136a9b8e7f2"
 ]);
 
 function isPublicRoute(pathname: string) {
